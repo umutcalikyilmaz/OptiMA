@@ -1,0 +1,41 @@
+#pragma once
+#include <Shared/Types.h>
+
+const static vector<double> assemblyManualOperationMeans {700, 1200, 2100, 3000, 4300};
+const static vector<double> assemblyManualOperationStds {65, 100, 150, 250, 250};
+//const static vector<double> assemblyManualOperationStds {150, 400, 500, 500, 900};
+const static double transpoterTraverseMean = 2500;
+const static double transpoterTraverseStd = 200;
+//const static double transpoterTraverseStd = 400;
+const static double inspectorReportMean = 800;
+const static double inspectorReportStd = 75;
+//const static double inspectorReportStd = 150;
+const static double conveyorBeltPickUpMean = 1500;
+const static double conveyorBeltPickUpStd = 150;
+//const static double conveyorBeltPickUpStd = 300;
+const static double conveyorBeltPlaceMean = 1000;
+const static double conveyorBeltPlaceStd = 100;
+//const static double conveyorBeltPlaceStd = 200;
+const static double drillPressOperationMean = 3000;
+const static double drillPressOperationStd = 250;
+//const static double drillPressOperationStd = 500;
+const static double inspectionQueuePickUpMean = 500;
+const static double inspectionQueuePickUpStd = 50;
+//const static double inspectionQueuePickUpStd = 100;
+const static double inspectionQueuePlaceMean = 2500;
+const static double inspectionQueuePlaceStd = 200;
+//const static double inspectionQueuePlaceStd = 400;
+const static double qaScannerOperationMean = 4000;
+const static double qaScannerOperationStd = 400;
+//const static double qaScannerOperationStd = 800;
+const static double weldingStationOperationMean = 5000;
+const static double weldingStationOperationStd = 500;
+//const static double weldingStationOperationStd = 1000;
+static double simulationTimeScale;
+static double managerTimeStep = 10000000000;
+static int maximumAssemblyWorker;
+static int maximumTransporter;
+static int maximumInspector;
+static int totalJobNumber;
+static shared_ptr<vector<unique_ptr<Job>>> jobs;
+static unsigned randomNumberSeed;
