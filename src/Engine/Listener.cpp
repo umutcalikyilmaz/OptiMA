@@ -1,115 +1,107 @@
-#include <Engine/Listener.h>
+#include "OptiMA/Engine/Listener.h"
 
 namespace OptiMA
 {
     void Listener::checkTrigger()
     {
-        while(running)
+        while(running_)
         {
-            unique_lock<mutex> lock(triggerLock);
-            triggerCondition.wait(lock, [this]
+            unique_lock<mutex> lock(triggerLock_);
+            triggerCondition_.wait(lock, [this]
             { 
-                return triggered.load(); 
+                return triggered_.load(); 
             });
 
-            triggered = false;
-            txnQueue->Trigger();
+            triggered_ = false;
+            txnQueue_->trigger();
         }
         
-        timerRunning = false;
-        deleteCondition.notify_one();
+        triggerRunning_ = false;
+        deleteCondition_.notify_one();
     }
 
-    void Listener::MeasureTime()
+    Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster) : driver_(driver),
+    amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster), optimized_(false), numCheck_(false), running_(true),
+    txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true) { }
+
+    Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator,
+    IScheduler* scheduler, bool trigger) : driver_(driver), amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster),
+    estimator_(estimator), scheduler_(scheduler), optimized_(true), numCheck_(false), running_(true), triggerRunning_(trigger),
+    txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true)
     {
-        while(running)
+        if(trigger)
         {
-            long now = chrono::steady_clock::now().time_since_epoch().count();
-
-            if(timeStep <= now - lastSent)
-            {
-                currentNum = 0;
-                lastSent = now;
-                txnQueue->Trigger();
-            }
-
-            std::this_thread::sleep_for(chrono::nanoseconds(timeStep + lastSent - now));
-        }
-        
-        timerRunning = false;
-        deleteCondition.notify_one();
-    }
-
-    Listener::Listener() : optimized(false), timeCheck(false), numCheck(false), running(true),
-    txnQueue(new TransactionQueue()) { }
-
-    Listener::Listener(Estimator* estimator, IScheduler* scheduler, double timeStep) : estimator(estimator),
-    scheduler(scheduler), optimized(true), timeStep((long)(timeStep * 1000000)), timeCheck(true), numCheck(false),
-    running(true), timerRunning(true), txnQueue(new TransactionQueue())
-    {
-        lastSent = chrono::steady_clock::now().time_since_epoch().count();
-        thread timer(&Listener::checkTrigger, this);
-        timer.detach();
+            thread triggerThread(&Listener::checkTrigger, this);
+            triggerThread.detach();
+        }        
     }    
 
-    Listener::Listener(Estimator* estimator, IScheduler* scheduler, int batchSize) : estimator(estimator),
-    scheduler(scheduler), optimized(true), batchSize(batchSize), timeCheck(false), numCheck(true), running(true),
-    txnQueue(new TransactionQueue()) { }
-
-    Listener::Listener(Estimator* estimator, IScheduler* scheduler, double timeStep, int batchSize) : estimator(estimator),
-    scheduler(scheduler), optimized(true), timeStep((long)(timeStep * 1000000)), batchSize(batchSize), timeCheck(true), numCheck(true),
-    running(true), timerRunning(true), txnQueue(new TransactionQueue())
+    Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator,
+    IScheduler* scheduler, bool trigger, int batchSize) : driver_(driver), amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster),
+    estimator_(estimator), scheduler_(scheduler), optimized_(true), batchSize_(batchSize), numCheck_(true), running_(true),
+    triggerRunning_(trigger), txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true)
     {
-        lastSent = chrono::steady_clock::now().time_since_epoch().count();
-        thread timer(&Listener::checkTrigger, this);
-        timer.detach();
+        if(trigger)
+        {
+            thread triggerThread(&Listener::checkTrigger, this);
+            triggerThread.detach();
+        }
     }
 
-    void Listener::SendTransaction(unique_ptr<ITransaction> txn)
+    void Listener::sendTransaction(unique_ptr<ITransaction> txn)
     {
-        if(!running)
+        if(!running_)
         {
             return;
-        }
+        }        
 
-        if(optimized)
+        txn->setId(transactionCount_++);  
+        txn->setDriver(driver_);      
+        txn->setAgentManager(amanager_);
+        txn->setPostMaster(postmaster_);
+        txn->findNonShareable(pmanager_);
+        //txn->clear();
+
+        if(optimized_)
         {
-            txn->SetLength(estimator->EstimateLength(*txn));
-            txnQueue->SilentPush(move(txn));
-            currentNum++;
+            txn->setLength(estimator_->estimateLength(*txn));
+            txnQueue_->silentPush(move(txn));            
 
-            if(currentNum >= batchSize && numCheck)
+            if((currentNum_ >= batchSize_ && numCheck_) || initial_)
             {
-                currentNum = 0;
-                txnQueue->Trigger();
+                initial_ = false;
+                currentNum_ = 0;
+                txnQueue_->trigger();
             }
         }
         else
         {
-            txnQueue->Push(move(txn));
+            txnQueue_->push(move(txn));
         }
+
+        currentNum_++;
     }
 
     void Listener::trigger()
     {
-        triggered = true;
-        triggerCondition.notify_one();
+        triggered_ = true;
+        triggerCondition_.notify_one();
     }
 
-    TransactionQueue* Listener::GetTransactionQueue()
+    TransactionQueue* Listener::getTransactionQueue()
     {
-        return txnQueue;
+        return txnQueue_;
     }
 
     Listener::~Listener()
     {
-        running = false;
+        running_ = false;
         trigger();
 
-        unique_lock<mutex> lock(timerLock);
-        deleteCondition.wait(lock, [this]
+        unique_lock<mutex> lock(triggerLock_);
+        deleteCondition_.wait(lock, [this]
         { 
-            return !timerRunning.load(); 
+            return !triggerRunning_.load(); 
         });
     }
 }

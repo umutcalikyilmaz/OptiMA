@@ -1,185 +1,182 @@
-#include <Engine/Driver.h>
+#include "OptiMA/Engine/Driver.h"
 
 namespace OptiMA
 {
-    void Driver::StartModel(MultiAgentModel& model)
+    void Driver::startModel(MultiAgentModel& model)
     {
-        startingTime = chrono::steady_clock::now().time_since_epoch().count();      
+        startingTime_ = chrono::steady_clock::now().time_since_epoch().count();      
 
-        if(!model.initialAgentsAdded)
+        if(!model.tfactorySet_)
         {
-            throw InvalidModelParameterException((char*)"None of the agents are allowed to start at in the beginning");
+            throw InvalidModelParameterException("Transaction factory is not provided by the user");
         }
 
-        if(model.schedulerSettingsAdded)
+        if(!model.initialAgentsAdded_)
         {
-            schSettings = model.schSettings;
-        }
-        else
-        {
-            schSettings = new SchedulerSettings();
-            schSettings->optimized = false;
+            throw InvalidModelParameterException("None of the agents are allowed to start at in the beginning");
         }
 
-        if(!model.estimatorAdded && schSettings->optimized)
+        if(model.schedulerSettingsAdded_)
         {
-            throw InvalidModelParameterException((char*)"Optimized model cannot be started unless an estimator is added");
-        }
-
-        keepStats = model.keepStats;
-        
-        if(keepStats)
-        {
-            keepStatsFilePath = model.keepStatsFilePath;
-        }
-
-        pmanager = new PluginManager(model.instanceFactories, model.pluginTypes, model.pluginIds, model.pluginAccesses);
-        
-        set<int> nonShareablePlugins = pmanager->GetNonShareable();
-        
-        executor = new Executor(this, pmanager, model.threadNumber, nonShareablePlugins, model.haltingAgents,
-        schSettings->optimized, keepStats);
-
-        if(model.defaultEstimator)
-        {
-            estimator = new DefaultEstimator(model.defaultEstimatorFilePath);
+            settingsCreated_ = false;
+            schSettings_ = model.schSettings_;
+            trigger_ = model.trigger_;
         }
         else
         {
-            estimator = model.estimator;
+            settingsCreated_ = true;
+            schSettings_ = new SchedulerSettings();
+            schSettings_->optimized = false;
+        }
+
+        if(!model.estimatorAdded_ && schSettings_->optimized)
+        {
+            throw InvalidModelParameterException("Optimized model cannot be started unless an estimator is added");
+        }
+
+        keepStats_ = model.keepStats_;
+        
+        if(keepStats_)
+        {
+            keepStatsFilePath_ = model.keepStatsFilePath_;
+        }
+
+        pmanager_ = new PluginManager(model.instanceFactories_, model.pluginTypes_, model.pluginIds_, model.pluginAccesses_);
+
+        amanager_ = new AgentManager(model.agentFactories_, model.agentCoreIds_, model.initialNumbers_, model.maximumNumbers_,
+        model.relationships_, model.communications_, model.pluginAccesses_, model.initialAgents_, pmanager_, startingTime_);
+        postmaster_ = amanager_->getPostmaster();
+
+        amanager_->startInitialAgents();
+
+        tfactory_ = model.tfactory_;
+        
+        set<int> nonShareablePlugins = pmanager_->getNonShareable();
+        
+        executor_ = new Executor(this, tfactory_, pmanager_, model.threadNumber_, nonShareablePlugins, schSettings_->optimized,trigger_,
+        keepStats_);
+
+        if(model.defaultEstimator_)
+        {
+            estimator_ = new DefaultEstimator(model.defaultEstimatorFilePath_);
+        }
+        else
+        {
+            estimator_ = model.estimator_;
         }        
 
-        if(schSettings->optimized)
+        if(schSettings_->optimized)
         {
-            if(model.timeCheck)
+            if(model.numCheck_)
             {
-                if(model.numCheck)
-                {
-                    listener = new Listener(estimator, scheduler, model.timeStep, model.batchSize);
-                }
-                else
-                {
-                    listener = new Listener(estimator, scheduler, model.timeStep);
-                }
+                listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, trigger_, model.batchSize_);
             }
             else
             {
-                if(model.numCheck)
-                {
-                    listener = new Listener(estimator, scheduler, model.batchSize);
-                }
-                else
-                {
-                    listener = new Listener(estimator, scheduler, 5);
-                }
+                listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, trigger_);
             }
 
-            listenerQueue = listener->GetTransactionQueue();
-            scheduler = new Scheduler(schSettings, executor, nonShareablePlugins, model.threadNumber);
-            scheduler->InsertTransactionQueue(listenerQueue);
+            listenerQueue_ = listener_->getTransactionQueue();
+            scheduler_ = new Scheduler(schSettings_, executor_, nonShareablePlugins, model.threadNumber_);
+            scheduler_->insertTransactionQueue(listenerQueue_);
         }
         else
         {
-            listener = new Listener();
-            listenerQueue = listener->GetTransactionQueue();
-            executor->InsertTransactionQueue(listenerQueue);
+            listener_ = new Listener(this, amanager_, pmanager_, postmaster_);
+            listenerQueue_ = listener_->getTransactionQueue();
+            executor_->insertTransactionQueue(listenerQueue_);
         }
 
-        executor->InsertListener((IListener*)listener);
-        executor->Start();
+        tfactory_->insertListener((IListener*)listener_);
+        executor_->insertListener((IListener*)listener_);
+        executor_->start();
 
-        amanager = new AgentManager(model.coreFactories, model.agentCoreIds, model.initialNumbers, model.maximumNumbers,
-        model.relationships, model.communications, model.pluginAccesses, model.initialAgents, model.initialParameters,
-        pmanager, listener, startingTime);
+        running_ = true;
+        tfactory_->initiate();
 
-        amanager->StartInitialAgents();
-        running = true;
-
-        if(schSettings->optimized)
+        if(schSettings_->optimized)
         {
-            scheduler->StartScheduling();
-            EndProcesses();
+            scheduler_->startScheduling();
+            endProcesses();
         }
         else
         {
-            unique_lock<mutex> lock(mainLock);
-            cv.wait(lock, [this]
+            unique_lock<mutex> lock(mainLock_);
+            cv_.wait(lock, [this]
             {
-                return !running.load();
+                return !running_.load();
             });
 
-            EndProcesses();
+            endProcesses();
         }        
     }
 
-    void Driver::HaltProgram(shared_ptr<Memory> outputParameters)
+    void Driver::haltProgram(shared_ptr<Memory> outputParameters)
     {
-        this->outputParameters = outputParameters;
+        this->outputParameters_ = outputParameters;
         
-        if(schSettings->optimized)
+        if(schSettings_->optimized)
         {
-            delete scheduler;
-            running = false;
-            cv.notify_one();
+            delete scheduler_;
+            running_ = false;
+            cv_.notify_one();
         }
         else
         {
-            this->outputParameters = outputParameters;
-            running = false;
-            cv.notify_one();
+            this->outputParameters_ = outputParameters;
+            running_ = false;
+            cv_.notify_one();
         }        
     }
 
-    void Driver::EndProcesses()
+    void Driver::endProcesses()
     {
-        listenerQueue->Exit();
-        executor->Stop();
+        listenerQueue_->exit();
+        executor_->stop();
 
-        if(keepStats)
+        if(keepStats_)
         {
-            auto statsMap = executor->GetStats();
+            auto statsMap = executor_->getStats();
             fstream file;
-            file.open(keepStatsFilePath, fstream::out | fstream::trunc);
+            file.open(keepStatsFilePath_, fstream::out | fstream::trunc);
 
             for(auto p1 : statsMap)
             {
                 for(auto p2 : p1.second)
                 {
-                    for(auto p3 : p2.second)
-                    {
-                        file << p1.first << "," << p2.first << "," << p3.first << "," << p3.second << "\n";
-                    }
+                    file << p1.first << "," << p2.first << "," << p2.second << "\n";
                 }
             }
 
             file.close();
         }
+
+        delete executor_;
+        delete listener_;
         
-        if(schSettings->optimized)
-        {            
-            delete executor;
-            delete listener;
-            delete estimator;
-        }
-        else
+        if(schSettings_->optimized)
         {
-            delete executor;
-            delete listener;
+            delete estimator_;
         }
         
-        delete listenerQueue;
-        delete amanager;
-        delete pmanager;
+        delete listenerQueue_;
+        delete amanager_;
+        delete pmanager_;
+
+        if(settingsCreated_)
+        {
+            delete schSettings_;
+        }
     }
 
-    shared_ptr<Memory> Driver::GetOutputParameters()
+    shared_ptr<Memory> Driver::getOutputParameters()
     {
-        unique_lock<mutex> lock(mainLock);
-        cv.wait(lock, [this] 
+        unique_lock<mutex> lock(mainLock_);
+        cv_.wait(lock, [this] 
         {
-            return !running.load();
+            return !running_.load();
         });
 
-        return outputParameters;
+        return outputParameters_;
     }
 }

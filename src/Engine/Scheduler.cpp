@@ -1,4 +1,4 @@
-#include <Engine/Scheduler.h>
+#include "OptiMA/Engine/Scheduler.h"
 
 namespace OptiMA
 {
@@ -108,30 +108,30 @@ namespace OptiMA
         }
     }
 
-    void Scheduler::FindConflicts()
+    void Scheduler::findConflicts()
     {        
-        txnNum = txns.size();
+        txnNum_ = txns_.size();
         map<int,vector<int>> pluginUse;
-        conflicts = new bool*[txnNum];
+        conflicts_ = new bool*[txnNum_];
 
-        for(int i = 0; i < txnNum; i++)
+        for(int i = 0; i < txnNum_; i++)
         {
-            conflicts[i] = new bool[txnNum];
+            conflicts_[i] = new bool[txnNum_];
 
-            for(int j = 0; j < txnNum; j++)
+            for(int j = 0; j < txnNum_; j++)
             {
-                conflicts[i][j] = false;
+                conflicts_[i][j] = false;
             }
         }
 
-        for(int nsp : nonShareablePlugins)
+        for(int nsp : nonShareablePlugins_)
         {
             pluginUse[nsp] = vector<int>();
         }
 
-        for(int i = 0; i < txnNum; i++)
+        for(int i = 0; i < txnNum_; i++)
         {
-            auto nonShareable = txns[i]->GetNonShareblePlugins();
+            auto nonShareable = txns_[i]->getNonShareblePlugins();
 
             for(int nsp : nonShareable)
             {
@@ -139,175 +139,175 @@ namespace OptiMA
             }
         }
 
-        for(int i = 0; i < txnNum; i++)
+        for(int i = 0; i < txnNum_; i++)
         {
-            auto nonShareable = txns[i]->GetNonShareblePlugins();
+            auto nonShareable = txns_[i]->getNonShareblePlugins();
 
             for(int nsp : nonShareable)
             {
                 for(int t : pluginUse[nsp])
                 {
-                    conflicts[i][t] = true;
+                    conflicts_[i][t] = true;
                 }
             }
         }
-
-        int asd = 0;
     }
 
-    void Scheduler::CreatePlan(TransactionScheduling::SolverOutput*& out)
+    void Scheduler::createPlan(TxnSP::SolverOutput*& out)
     {
-        lengths = new double[txnNum];
+        lengths_ = new double[txnNum_];
 
-        for(int i = 0; i < txnNum; i++)
+        for(int i = 0; i < txnNum_; i++)
         {
-            lengths[i] = txns[i]->GetLength();
+            lengths_[i] = txns_[i]->getLength();
         }
 
-        sinp.prb = new TransactionScheduling::Problem(txns.size(), threadNum, lengths, conflicts);
-        out = slv->Solve(sinp);
-        delete sinp.prb;
+        sinp_.prb = new TxnSP::Problem(txns_.size(), threadNum_, lengths_, conflicts_);
+        out = slv_->solve(sinp_);
+        delete sinp_.prb;
     }
 
     Scheduler::Scheduler(SchedulerSettings* settings, IExecutor* executor, const set<int>& nonShareablePlugins,
-    int threadNum) : executor(executor), nonShareablePlugins(nonShareablePlugins), threadNum(threadNum), running(false),
-    stopped(true)
+    int threadNum) : executor_(executor), nonShareablePlugins_(nonShareablePlugins), threadNum_(threadNum), running_(false),
+    stopped_(true)
     {
-        perm = settings->permuted;
-        optimized = settings->optimized;
+        perm_ = settings->permuted;
+        optimized_ = settings->optimized;
 
         switch (settings->optimizationMethod)
         {
-        case TransactionScheduling::DP :
-            slv = new TransactionScheduling::DPSolver();
-            sinp.DP_SolutionType = settings->DP_SolutionType;
+        case TxnSP::DP :
+            slv_ = new TxnSP::DPSolver();
+            sinp_.DP_SolutionType = settings->DP_SolutionType;
             break;
 
-        case TransactionScheduling::ES :
-            slv = new TransactionScheduling::ESSolver();
+        case TxnSP::ES :
+            slv_ = new TxnSP::ESSolver();
             break;
 
-        case TransactionScheduling::MIP :
-            slv = new TransactionScheduling::MIPSolver();
+        #ifdef ENABLE_MIP
+        case TxnSP::MIP :
+            slv_ = new TxnSP::MIPSolver();
             break;
+        #endif
 
-        case TransactionScheduling::SA :
-            slv = new TransactionScheduling::SASolver();
-            sinp.SA_DecrementParameter = settings->SA_DecrementParameter;
-            sinp.SA_DecrementType = settings->SA_DecrementType;
-            sinp.SA_MaxTemperature = settings->SA_MaxTemperature;
+        case TxnSP::SA :
+            slv_ = new TxnSP::SASolver();
+            sinp_.SA_DecrementParameter = settings->SA_DecrementParameter;
+            sinp_.SA_DecrementType = settings->SA_DecrementType;
+            sinp_.SA_MaxTemperature = settings->SA_MaxTemperature;
             break;
         }
 
         if(settings->permuted)
         {
-            optimizePtr = &Scheduler::Permutation;
-            order = new int[threadNum];
-            norder = new int[threadNum];
-            total = new double[threadNum];
+            optimizePtr_ = &Scheduler::permutation;
+            order_ = new int[threadNum];
+            norder_ = new int[threadNum];
+            total_ = new double[threadNum];
 
             for(int i = 0; i < threadNum; i++)
             {
-                order[i] = i;
-                total[i] = 0;
+                order_[i] = i;
+                total_[i] = 0;
             }
         }
         else
         {
-            optimizePtr = &Scheduler::NoPermutation;
+            optimizePtr_ = &Scheduler::noPermutation;
         }       
     }
 
-    void Scheduler::Optimize(TransactionScheduling::SolverOutput*& out)
+    void Scheduler::optimize(TxnSP::SolverOutput*& out)
     {
-        txns = txnQueue->PullAll();
-        FindConflicts();
-        CreatePlan(out);
+        txns_ = txnQueue_->pullAll();
+        findConflicts();
+        createPlan(out);
     }
 
-    void Scheduler::NoPermutation()
+    void Scheduler::noPermutation()
     {
-        while(running)
+        while(running_)
         {            
-            TransactionScheduling::SolverOutput* out;
-            Optimize(out);
+            TxnSP::SolverOutput* out;
+            optimize(out);
 
-            for(int i = 0; i < threadNum; i++)
+            for(int i = 0; i < threadNum_; i++)
             {
-                for(int job : out->cores[i])
+                for(int job : out->jobs[i])
                 {
-                    executor->AssignTransaction(move(txns[job]), i);
+                    executor_->assignTransaction(move(txns_[job]), i);
                 }
             }
 
             delete out;
-            txns.clear();
+            txns_.clear();
         }
 
-        stopped = true;
-        cv.notify_one();
+        stopped_ = true;
+        cv_.notify_one();
     }
 
-    void Scheduler::Permutation()
+    void Scheduler::permutation()
     {
-        while(running)
+        while(running_)
         {
-            TransactionScheduling::SolverOutput* out;
-            Optimize(out);
+            TxnSP::SolverOutput* out;
+            optimize(out);
 
-            OrderDescending(norder, out->coreTimes, threadNum);
+            OrderDescending(norder_, out->processingTimes, threadNum_);
                 
-            for(int i = 0; i < threadNum; i++)
+            for(int i = 0; i < threadNum_; i++)
             {
-                vector<Transaction*> transactionList;
+                vector<ITransaction*> transactionList;
 
-                for(int job : out->cores[norder[i]])
+                for(int job : out->jobs[norder_[i]])
                 {
-                    executor->AssignTransaction(move(txns[job]), order[i]);
+                    executor_->assignTransaction(move(txns_[job]), order_[i]);
                 }
 
-                total[order[i]] += out->coreTimes[norder[i]];
+                total_[order_[i]] += out->processingTimes[norder_[i]];
             }
                 
-            OrderAscending(order, total, threadNum);
+            OrderAscending(order_, total_, threadNum_);
             delete out;
-            txns.clear();
+            txns_.clear();
         }
 
-        stopped = true;
-        cv.notify_one();
+        stopped_ = true;
+        cv_.notify_one();
     }
 
-    void Scheduler::InsertTransactionQueue(TransactionQueue* txnQueue)
+    void Scheduler::insertTransactionQueue(TransactionQueue* txnQueue)
     {
-        running = true;
-        this->txnQueue = txnQueue;
+        running_ = true;
+        txnQueue_ = txnQueue;
     }
 
-    void Scheduler::StartScheduling()
+    void Scheduler::startScheduling()
     {
-        running = true;
-        stopped = false;
-        (this->*optimizePtr)();
+        running_ = true;
+        stopped_ = false;
+        (this->*optimizePtr_)();
     }
 
     Scheduler::~Scheduler()
     {
-        running = false;
-        txnQueue->Trigger();
-        unique_lock<mutex> lock(deleteLock);
-        cv.wait(lock, [this] 
+        running_ = false;
+        txnQueue_->trigger();
+        unique_lock<mutex> lock(deleteLock_);
+        cv_.wait(lock, [this] 
         {
-            return stopped.load();
+            return stopped_.load();
         });
 
-        delete slv;
+        delete slv_;
 
-        if(perm)
+        if(perm_)
         {
-            delete[] total;
-            delete[] order;
-            delete[] norder;
+            delete[] total_;
+            delete[] order_;
+            delete[] norder_;
         }
     }
 }

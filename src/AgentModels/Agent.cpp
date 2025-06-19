@@ -1,81 +1,97 @@
-#include <AgentModels/Agent.h>
+#include "OptiMA/AgentModels/Agent.h"
 
 namespace OptiMA
 {
-    
+    Agent::Agent() : postBox_(new PostBox()) { }
 
-    Agent::Agent(AgentCore* core, CorePool* pool, int agentId, int agentType) : agentId(agentId),
-    agentType(agentType), core(core), corePool(pool), status(IDLE)
+    void Agent::start()
     {
-        this->core->SetOwner(this);
+        status_ = ACTIVE;
+        started_ = true;
     }
 
-    unique_ptr<ITransaction> Agent::Process(shared_ptr<TransactionResult> previousResult)
+    void Agent::stop()
     {
-        unique_ptr<ITransaction> txn = nullptr; 
+        started_ = false;
+    }
+
+    void Agent::setAgentId(int agentId)
+    {
+        agentId_ = agentId;
+    }
+
+    void Agent::setAgentType(int agentType)
+    {
+        agentType_ = agentType;
+    }
+
+    void Agent::setCurrentTransaction(long transactionId)
+    {
+        currentTransaction_ = transactionId;
+    }
+
+    void Agent::setAgentManager(IAgentManager* amanger)
+    {
+        amanager_ = amanger;
+    }
+
+    void Agent::setPluginManager(PluginManager* pmanager)
+    {
+        pmanager_ = pmanager;
+    }
+
+    void Agent::setPostmaster(Postmaster* postmaster)
+    {
+        postmaster_ = postmaster;
+    }
+
+    void Agent::setSupervisors(vector<int>& supervisors)
+    {
+        supervisors_ = supervisors;
+    }
+
+    void Agent::setSubordinates(vector<int>& subordinates)
+    {
+        subordinates_ = subordinates;
+    }
+
+    void Agent::setCommunications(vector<int>& contacts)
+    {
+        contacts_ = contacts;
+    }
+
+    void Agent::setTools(vector<int>& tools)
+    {
+        allowedPlugins_ = tools;
+    }
+
+    AgentStatus Agent::getStatus()
+    {
+        return status_;
+    }
         
-        try
-        {
-            return core->RequestProcess(previousResult);            
-        }
-        catch(const std::exception& e) { }
-
-        if(txn == nullptr)
-        {
-            status = IDLE;
-            core->SelfStop(agentId, agentType);
-        }
-
-        return txn;
+    int Agent::getAgentId()
+    {
+        return agentId_;
     }
 
-    unique_ptr<ITransaction> Agent::BeginProcess(shared_ptr<Memory> initialParameters)
+    int Agent::getAgentType()
     {
-        unique_ptr<ITransaction> txn = nullptr;
-
-        try
-        {
-            txn = core->RequestBeginProcess(initialParameters);
-        }
-        catch(const std::exception& e) { }
-        
-        if(txn == nullptr)
-        {
-            status = IDLE;
-            core->SelfStop(agentId, agentType);
-        }
-
-        return txn;
+        return agentType_;
     }
 
-    void Agent::Start()
+    long Agent::getCurrentTransaction()
     {
-        status = ACTIVE;
-        core->Start();
+        return currentTransaction_;
     }
 
-    void Agent::Stop()
+    PostBox* Agent::getPostBoxAddress()
     {
-        core->Stop();
-    }
-
-    AgentStatus Agent::GetStatus()
-    {
-        return status;
-    }
-        
-    int Agent::GetAgentId()
-    {
-        return agentId;
-    }
-
-    int Agent::GetAgentType()
-    {
-        return agentType;
+        return postBox_;
     }
 
     Agent::~Agent()
     {
-        corePool->ReturnCore(core);
+        delete postBox_;
     }
 }

@@ -1,80 +1,80 @@
-#include <TransactionModels/TransactionQueue.h>
+#include "OptiMA/TransactionModels/TransactionQueue.h"
 
 namespace OptiMA
 {
-    TransactionQueue::TransactionQueue() : triggered(false), exit(false) { }
+    TransactionQueue::TransactionQueue() : triggered_(false), exit_(false) { }
 
-    void TransactionQueue::SilentPush(unique_ptr<ITransaction> txn)
+    void TransactionQueue::silentPush(unique_ptr<ITransaction> txn)
     {
-        lock_guard<mutex> lock(queueLock);
-        txnQueue.push(move(txn));
+        lock_guard<mutex> lock(queueLock_);
+        txnQueue_.push(move(txn));
     }
 
-    void TransactionQueue::Push(unique_ptr<ITransaction> txn)
+    void TransactionQueue::push(unique_ptr<ITransaction> txn)
     {      
-        lock_guard<mutex> lock(queueLock);
-        txnQueue.push(move(txn));
-        cv.notify_one();
+        lock_guard<mutex> lock(queueLock_);
+        txnQueue_.push(move(txn));
+        cv_.notify_one();
     }
 
-    unique_ptr<ITransaction> TransactionQueue::Pull()
+    unique_ptr<ITransaction> TransactionQueue::pull()
     {        
-        unique_lock<mutex> lock(queueLock);
-        cv.wait(lock, [this] 
+        unique_lock<mutex> lock(queueLock_);
+        cv_.wait(lock, [this] 
         {
-            return !txnQueue.empty() || exit.load();
+            return !txnQueue_.empty() || exit_.load();
         });
 
-        if(exit)
+        if(exit_)
         {
             return nullptr;            
         }
 
-        unique_ptr<ITransaction> res = move(txnQueue.front());
-        txnQueue.pop();
+        unique_ptr<ITransaction> res = move(txnQueue_.front());
+        txnQueue_.pop();
         return res;
     }
     
-    vector<unique_ptr<ITransaction>> TransactionQueue::PullAll()
+    vector<unique_ptr<ITransaction>> TransactionQueue::pullAll()
     {
-        unique_lock<mutex> lock(queueLock);
-        cv.wait(lock, [this]
+        unique_lock<mutex> lock(queueLock_);
+        cv_.wait(lock, [this]
         { 
-            return triggered.load() || exit.load(); 
+            return triggered_.load() || exit_.load(); 
         });
 
         vector<unique_ptr<ITransaction>> res;
 
-        if(exit)
+        if(exit_)
         {
             return res;
         }
 
-        while(!txnQueue.empty())
+        while(!txnQueue_.empty())
         {
-            res.push_back(move(txnQueue.front()));
-            txnQueue.pop();
+            res.push_back(move(txnQueue_.front()));
+            txnQueue_.pop();
         }
 
-        triggered = false;
+        triggered_ = false;
         return res;
     }
 
     bool TransactionQueue::isEmpty()
     {
-        lock_guard<mutex> lock(queueLock);
-        return txnQueue.empty();
+        lock_guard<mutex> lock(queueLock_);
+        return txnQueue_.empty();
     }
 
-    void TransactionQueue::Trigger()
+    void TransactionQueue::trigger()
     {
-        triggered = true;
-        cv.notify_one();
+        triggered_ = true;
+        cv_.notify_one();
     }
 
-    void TransactionQueue::Exit()
+    void TransactionQueue::exit()
     {
-        exit = true;
-        cv.notify_all();
+        exit_ = true;
+        cv_.notify_all();
     }
 }

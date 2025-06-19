@@ -1,55 +1,42 @@
-#include <Shared/SharedModels.h>
+#include "TxnSP/Shared/SharedModels.h"
 
-namespace TransactionScheduling
+namespace TxnSP
 {
 	RandomNumberGenerator::RandomNumberGenerator() : generator(std::random_device{}()) { }
 
-	NormalRandomNumberGenerator::NormalRandomNumberGenerator(double mean, double std) : normalDistribution(mean, std) { }
+	NormalRandomNumberGenerator::NormalRandomNumberGenerator(double mean, double std) : normalDistribution_(mean, std) { }
 
-	double NormalRandomNumberGenerator::Generate()
+	double NormalRandomNumberGenerator::generate()
 	{
-		return normalDistribution(generator);
+		return normalDistribution_(generator);
 	}
 
-	void NormalRandomNumberGenerator::ChangeParams(double mean, double std)
+	void NormalRandomNumberGenerator::changeParameters(double mean, double std)
 	{
-		normalDistribution.param(std::normal_distribution<double>::param_type(mean, std));
+		normalDistribution_.param(std::normal_distribution<double>::param_type(mean, std));
 	}
 	
-	UniformRandomIntGenerator::UniformRandomIntGenerator(int min, int max) : uniformDistribution(min, max) { }
+	UniformRandomIntGenerator::UniformRandomIntGenerator(int min, int max) : uniformDistribution_(min, max) { }
 
-	int UniformRandomIntGenerator::Generate()
+	int UniformRandomIntGenerator::generate()
 	{
-		return uniformDistribution(generator);
+		return uniformDistribution_(generator);
 	}
 
-	void UniformRandomIntGenerator::ChangeParams(int min, int max)
+	void UniformRandomIntGenerator::changeParameters(int min, int max)
 	{
-		uniformDistribution.param(std::uniform_int_distribution<int>::param_type(min, max));
+		uniformDistribution_.param(std::uniform_int_distribution<int>::param_type(min, max));
 	}
 
-	UniformRandomDoubleGenerator::UniformRandomDoubleGenerator(double min, double max) : uniformDistribution(min, max) { }
+	UniformRandomDoubleGenerator::UniformRandomDoubleGenerator(double min, double max) : uniformDistribution_(min, max) { }
 
-	double UniformRandomDoubleGenerator::Generate()
+	double UniformRandomDoubleGenerator::generate()
 	{
-		return uniformDistribution(generator);
+		return uniformDistribution_(generator);
 	}
 
-	void UniformRandomDoubleGenerator::ChangeParams(double min, double max)
+	void UniformRandomDoubleGenerator::changeParameters(double min, double max)
 	{
-		uniformDistribution.param(std::uniform_real_distribution<double>::param_type(min, max));
-	}
-
-	
-	UniformRandomInt128Generator::UniformRandomInt128Generator(__uint128_t min, __uint128_t max) : uniformDistribution(min, max) { }
-
-	__uint128_t UniformRandomInt128Generator::Generate()
-	{
-		return uniformDistribution(generator);
-	}
-
-	void UniformRandomInt128Generator::ChangeParams(__uint128_t min, __uint128_t max)
-	{
-		uniformDistribution.param(std::uniform_int_distribution<__uint128_t>::param_type(min, max));
+		uniformDistribution_.param(std::uniform_real_distribution<double>::param_type(min, max));
 	}
 }

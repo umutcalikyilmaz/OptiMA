@@ -1,4 +1,4 @@
-#include <Engine/DefaultEstimator.h>
+#include "OptiMA/Engine/DefaultEstimator.h"
 
 namespace OptiMA
 {
@@ -6,7 +6,9 @@ namespace OptiMA
     {
         fstream file;
         file.open(statsFilePath, fstream::in);
-        string line;        
+        string line;
+        generalAverage_ = 0;
+        int count = 0;
 
         while(getline(file, line))
         {
@@ -33,33 +35,27 @@ namespace OptiMA
 
             if(value <= 0)
             {
-                throw InvalidModelParameterException((char*)"Transaction length must be greater than 0");
+                throw InvalidModelParameterException("Transaction length must be greater than 0");
             }
 
-            averages[keys[0]][keys[1]][keys[2]] = value;
+            averages_[keys[0]][keys[1]] = value;
+            generalAverage_ += value;
+            count++;
         }
 
+        generalAverage_ /= count;
         file.close();
     }
 
-    double DefaultEstimator::EstimateLength(const ITransaction& txn)
-    {
-        int a = txn.GetAgentType();
-        TransactionType t = txn.GetTransactionType();
-        int st = txn.GetSubType();
-        if(txn.GetTransactionType() == HALTPROGRAM)
-        {
-            return 1;
-        }
-        
+    double DefaultEstimator::estimateLength(const ITransaction& txn)
+    {      
         try
         {
-            return averages.at(txn.GetAgentType()).at(txn.GetTransactionType()).at(txn.GetSubType());
+            return averages_.at(txn.getType()).at(txn.getSubType());
         }
         catch(exception e)
         {
-            return 10000;
+            return generalAverage_;
         }
-        
     }
 }

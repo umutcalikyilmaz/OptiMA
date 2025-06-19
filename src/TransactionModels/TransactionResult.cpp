@@ -1,4 +1,4 @@
-#include <TransactionModels/TransactionResult.h>
+#include "OptiMA/TransactionModels/TransactionResult.h"
 
 namespace OptiMA
 {

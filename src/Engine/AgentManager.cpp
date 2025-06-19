@@ -1,12 +1,12 @@
-#include <Engine/AgentManager.h>
+#include "OptiMA/Engine/AgentManager.h"
 
 namespace OptiMA
 {
-    bool AgentManager::CheckSender(int senderType, int targetType)
+    bool AgentManager::checkSender(int senderType, int targetType)
     {
         bool found = false;
 
-        for(int sup : supervisors[targetType])
+        for(int sup : supervisors_[targetType])
         {
             if(sup == senderType)
             {
@@ -18,37 +18,43 @@ namespace OptiMA
         return found;
     }
 
-    void AgentManager::SendBeginTransaction(Agent* owner, shared_ptr<Memory> initialParameters)
+    void AgentManager::enterLog(long transactionId, AgentOperationType operation, int parameter)
     {
-        listener->SendTransaction(make_unique<Begin>(owner, initialParameters));
+        lock_guard<mutex> lock(logLock_);
+        auto it = transactionLog_.find(transactionId);
+
+        if(it == transactionLog_.end())
+        {
+            transactionLog_[transactionId] = vector<pair<AgentOperationType, int>>();            
+        }
+
+        transactionLog_.at(transactionId).push_back(make_pair(operation, parameter));
     }
 
-    AgentManager::AgentManager(vector<IAgentCoreFactory*>& coreFactories, vector<int>& coreIds,
-    vector<int>& initialNumbers, vector<int>& maxNumbers, vector<pair<int,int>>& relationships,
-    vector<pair<int,int>>& communications, vector<pair<int,int>> pluginAccesses, vector<int>& initialAgents,
-    map<int,shared_ptr<Memory>>& initialParameters, PluginManager* pmanager, Listener* listener, long startingTime)
-    : agentCount(0), initialAgents(initialAgents),initialParameters(initialParameters), listener(listener),
-    startingTime(startingTime)
+    AgentManager::AgentManager(vector<IAgentFactory*>& agentFactories, vector<int>& agentTypes, vector<int>& initialNumbers,
+    vector<int>& maxNumbers, vector<pair<int,int>>& relationships, vector<pair<int,int>>& communications, vector<pair<int,int>> pluginAccesses,
+    vector<int>& initialAgents, PluginManager* pmanager, long startingTime) : agentCount_(0), initialAgents_(initialAgents),
+    startingTime_(startingTime)
     {
         int c = 0;
         map<int,vector<int>> communicators;
 
-        for(int type : coreIds)
+        for(int type : agentTypes)
         {
-            this->maxNumbers[type] = maxNumbers[c];
-            currentNumbers[type] = initialNumbers[c];            
-            supervisors[type] = vector<int>();
-            subordinates[type] = vector<int>();
+            maxNumbers_[type] = maxNumbers[c];
+            currentNumbers_[type] = initialNumbers[c];            
+            supervisors_[type] = vector<int>();
+            subordinates_[type] = vector<int>();
             communicators[type] = vector<int>();
-            tools[type] = vector<int>();
-            agentIds[type] = vector<int>();
+            tools_[type] = vector<int>();
+            agentIds_[type] = vector<int>();
             c++;
         }
 
         for(pair<int,int> p : relationships)
         {
-            supervisors[p.second].push_back(p.first);
-            subordinates[p.first].push_back(p.second);
+            supervisors_[p.second].push_back(p.first);
+            subordinates_[p.first].push_back(p.second);
         }
 
         for(pair<int,int> p : communications)
@@ -59,31 +65,31 @@ namespace OptiMA
 
         for(pair<int,int> p : pluginAccesses)
         {
-            tools[p.first].push_back(p.second); 
+            tools_[p.first].push_back(p.second); 
         }
 
         c = 0;
-        tfactory = new TransactionFactory();
+        postmaster_ = new Postmaster(agentIds_, communicators, startingTime);
 
-        postmaster = new Postmaster(agentIds, communicators, startingTime);
-
-        for(int type : coreIds)
+        for(int type : agentTypes)
         {
-            corePools[type] = new CorePool(coreFactories[c], type, supervisors[type], subordinates[type],
-            communicators[type], tools[type], this, tfactory, pmanager, postmaster);
+            agentPools_[type] = new AgentPool(agentFactories[c], type, supervisors_[type], subordinates_[type], communicators[type], tools_[type],
+            this, pmanager, postmaster_);
 
             for(int i = 0; i < initialNumbers[c]; i++)
             {
-                agentMap[agentCount] = make_pair(new Agent(corePools[type]->GetCore(), corePools[type], agentCount, type), type);                
-                postmaster->AddAgent(agentCount, type, agentMap[agentCount].first->core->GetPostBoxAddress());
-                agentIds[type].push_back(agentCount);
-                agentCount++;
+                Agent* agent = agentPools_[type]->getAgent();
+                agent->setAgentId(agentCount_);
+                agentMap_[agentCount_] = make_pair(agent, type);
+                postmaster_->addAgent(agentCount_, type, agentMap_[agentCount_].first->getPostBoxAddress());
+                agentIds_[type].push_back(agentCount_);
+                agentCount_++;
             }
 
             c++;
         }        
 
-        for(pair<int,pair<Agent*,int>> p : agentMap)
+        for(pair<int,pair<Agent*,int>> p : agentMap_)
         {
             AgentInfo* ai = new AgentInfo();
             ai->agentId = p.first;
@@ -91,204 +97,337 @@ namespace OptiMA
             ai->status = IDLE;
             ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime;
             ai->lastStatusChange = ai->creationTime;
-            agentInfos[p.first] = ai;
+            agentInfos_[p.first] = ai;
         }
     }
 
-    void AgentManager::CreateAgent(int senderId, int senderType, int targetType)
+    Agent* AgentManager::seizeAgent(long transactionId, int agentType)
     {
-        if(!CheckSender(senderType, targetType))
+        lock_guard<mutex> lock(agentLock_);
+
+        for(int id : agentIds_.at(agentType))
         {
-            throw UnautorizedAccessException((char*)"The sender is not autorized to create this type of agent");
-        }
+            if(agentInfos_.at(id)->status == ACTIVE)
+            {
+                agentInfos_.at(id)->status = ASSIGNED;
+                Agent* res = agentMap_.at(id).first;
+                res->setCurrentTransaction(transactionId);
+                return res;
+            }
+        }        
 
-        lock_guard<mutex> lock(agentLock);
+        throw AgentUnavailableException("No available agent of the given type exists");
+    }
+    /*
+    void AgentManager::assignAgentById(long transactionId, int agentId)
+    {
+        lock_guard<mutex> lock(agentLock_);
 
-        if(currentNumbers.at(targetType) == maxNumbers.at(targetType))
+        if(agentInfos_.at(agentId)->status == ACTIVE)
         {
-            throw AgentLimitException((char*)"Maximum number of agents for this agent type is exceeded.");
+            agentInfos_.at(agentId)->status = ASSIGNED;
+            Agent* res = agentMap_.at(agentId).first;
+            res->setCurrentTransaction(transactionId);
         }
+        else
+        {
+            throw AgentUnavailableException("The requested agent is not available");
+        }
+    }
+    */
 
-        currentNumbers.at(targetType)++;
-
-        AgentInfo* ai = new AgentInfo();
-        ai->agentId = agentCount;
-        ai->agentType = targetType;
-        ai->status = IDLE;
-        ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime;
-        ai->lastStatusChange = ai->creationTime;
-
-        agentMap[agentCount] = make_pair(new Agent(corePools[targetType]->GetCore(), corePools[targetType], agentCount, targetType), targetType);
-        agentInfos[agentCount] = ai;
-        agentIds.at(targetType).push_back(agentCount);
-        agentCount++;
+    void AgentManager::releaseAgent(int agentId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        agentInfos_.at(agentId)->status = ACTIVE;
+        agentMap_.at(agentId).first->setCurrentTransaction(-1);
     }
 
-    void AgentManager::CreateAgent(int senderId, int senderType, int targetType, shared_ptr<Memory> initialParameters)
+    void AgentManager::transferOwnership(int transactionId, int agentId)
     {
-        if(!CheckSender(senderType, targetType))
-        {
-            throw UnautorizedAccessException((char*)"The sender is not autorized to create this type of agent");
-        }
-
-        lock_guard<mutex> lock(agentLock);
-
-        if(currentNumbers[targetType] == maxNumbers[targetType])
-        {
-            throw AgentLimitException((char*)"Maximum number of agents for this agent type is exceeded.");
-        }
-
-        currentNumbers[targetType]++;
-
-        AgentInfo* ai = new AgentInfo();
-        ai->agentId = agentCount;
-        ai->agentType = targetType;
-        ai->status = IDLE;
-        ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime;
-        ai->lastStatusChange = ai->creationTime;
-
-        agentMap[agentCount] = make_pair(new Agent(corePools[targetType]->GetCore(), corePools[targetType], agentCount, targetType), targetType);
-        agentInfos[agentCount] = ai;
-        agentIds.at(targetType).push_back(agentCount);
-        int targetId = agentCount;
-        agentCount++;
-
-        SendBeginTransaction(agentMap[targetId].first, initialParameters);
+        lock_guard<mutex> lock(agentLock_);
+        agentMap_.at(agentId).first->setCurrentTransaction(transactionId);
     }
 
-    void AgentManager::StartAgent(int senderId, int senderType, int targetId, shared_ptr<Memory> initialParameters)
+    void AgentManager::requestCreateAgent(long transactionId, int senderId, int senderType, int targetType)
     {
-        agentLock.lock();
-        int targetType = agentMap.at(targetId).second;        
-
-        if(!CheckSender(senderType, targetType))
+        if(!checkSender(senderType, targetType))
         {
-            agentLock.unlock();
-            throw UnautorizedAccessException((char*)"The sender is not autorized to start this type of agent");
+            throw UnautorizedAccessException("The sender is not autorized to create this type of agent");
         }
 
-        agentMap.at(targetId).first->Start();
-        agentInfos.at(targetId)->status = ACTIVE;
-        agentInfos.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime;
-        agentLock.unlock();
+        lock_guard<mutex> lock(agentLock_);
 
-        SendBeginTransaction(agentMap.at(targetId).first, initialParameters);
+        if(currentNumbers_.at(targetType) == maxNumbers_.at(targetType))
+        {
+            throw AgentLimitException("Maximum number of agents for this agent type is exceeded.");
+        }
+
+        enterLog(transactionId, CREATE, targetType);
     }
 
-    void AgentManager::StopAgent(int senderId, int senderType, int targetId)
+    void AgentManager::requestCreateAndStartAgent(long transactionId, int senderId, int senderType, int targetType)
     {
-        lock_guard<mutex> lock(agentLock);
-        int targetType = agentMap[targetId].second;
+        if(!checkSender(senderType, targetType))
+        {
+            throw UnautorizedAccessException("The sender is not autorized to create this type of agent");
+        }
+
+        lock_guard<mutex> lock(agentLock_);
+
+        if(currentNumbers_.at(targetType) == maxNumbers_.at(targetType))
+        {
+            throw AgentLimitException("Maximum number of agents for this agent type is exceeded.");
+        }
+
+        enterLog(transactionId, CREATEANDSTART, targetType);
+    }
+
+    void AgentManager::requestStartAgent(long transactionId, int senderId, int senderType, int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        int targetType = agentMap_.at(targetId).second;        
+
+        if(!checkSender(senderType, targetType))
+        {
+            throw UnautorizedAccessException("The sender is not autorized to start this type of agent");
+        }
+
+        enterLog(transactionId, START, targetId);
+    }
+
+    void AgentManager::requestStopAgent(long transactionId, int senderId, int senderType, int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        int targetType = agentMap_[targetId].second;
 
         if(senderId != targetId)
         {
-            if(!CheckSender(senderType, targetType))
+            if(!checkSender(senderType, targetType))
             {
-                throw UnautorizedAccessException((char*)"The sender is not autorized to halt this type of agent");
+                throw UnautorizedAccessException("The sender is not autorized to stop this type of agent");
             }
-        }
-        
-        agentMap.at(targetId).first->Stop();
-        agentInfos.at(targetId)->status = IDLE;
-        agentInfos.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime;        
+
+            if(agentInfos_[targetId]->status == ASSIGNED)
+            {
+                throw UnautorizedAccessException("The agent cannot be stopped because it is assigned to a transaction");
+            }
+        }        
+
+        enterLog(transactionId, START, targetId);
     }
 
-    void AgentManager::DestroyAgent(int senderId, int senderType, int targetId)
+    void AgentManager::requestDestroyAgent(long transactionId, int senderId, int senderType, int targetId)
     {
-        lock_guard<mutex> lock(agentLock);
-        int targetType = agentMap.at(targetId).second;
+        lock_guard<mutex> lock(agentLock_);
+        int targetType = agentMap_.at(targetId).second;
 
-        if(!CheckSender(senderType, targetType))
+        if(!checkSender(senderType, targetType))
         {
-            throw UnautorizedAccessException((char*)"The sender is not autorized to destroy this type of agent");
+            throw UnautorizedAccessException("The sender is not autorized to destroy this type of agent");
         }
 
-        if(agentMap.at(targetId).first->GetStatus() == ACTIVE)
+        if(agentMap_.at(targetId).first->getStatus() != IDLE)
         {
-            throw UnautorizedAccessException((char*)"An active agent cannot be destroyed");
+            throw UnautorizedAccessException("The agent cannot be destroyed because it is not idle.");
         }
-        
-        currentNumbers.at(targetType)--;
-        
-        delete agentMap.at(targetId).first;
-        agentMap.erase(targetId);
 
-        delete agentInfos.at(targetId);
-        agentInfos.erase(targetId);
-        
-        agentIds.at(targetType).erase(std::remove(agentIds.at(targetType).begin(), agentIds.at(targetType).end(), targetId), agentIds.at(targetType).end());
+        enterLog(transactionId, DESTROY, targetId);
     }
 
-    shared_ptr<Memory>  AgentManager::GetAgentInfo(int senderId, int senderType, int targetId)
+    void AgentManager::createAgent(int targetType)
     {
-        lock_guard<mutex> lock(agentLock);
-        int targetType = agentMap.at(targetId).second;
+        lock_guard<mutex> lock(agentLock_);
 
-        if(!CheckSender(senderType, targetType))
+        currentNumbers_.at(targetType)++;
+
+        AgentInfo* ai = new AgentInfo();
+        ai->agentId = agentCount_;
+        ai->agentType = targetType;
+        ai->status = IDLE;
+        ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
+        ai->lastStatusChange = ai->creationTime;
+
+        Agent* agent = agentPools_[targetType]->getAgent();
+        agent->setAgentId(agentCount_);
+        agentMap_[agentCount_] = make_pair(agent, targetType);
+        agentInfos_[agentCount_] = ai;
+        agentIds_.at(targetType).push_back(agentCount_);
+        agentCount_++;
+    }
+
+    void AgentManager::createAndStartAgent(int targetType)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        currentNumbers_[targetType]++;
+
+        AgentInfo* ai = new AgentInfo();
+        ai->agentId = agentCount_;
+        ai->agentType = targetType;
+        ai->status = IDLE;
+        ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
+        ai->lastStatusChange = ai->creationTime;
+
+        Agent* agent = agentPools_[targetType]->getAgent();
+        agent->setAgentId(agentCount_);
+        agentMap_[agentCount_] = make_pair(agent, targetType);
+        agentInfos_[agentCount_] = ai;
+        agentIds_.at(targetType).push_back(agentCount_);
+        int targetId = agentCount_;
+        agentCount_++;
+    }
+
+    void AgentManager::startAgent(int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+
+        agentMap_.at(targetId).first->start();
+        agentInfos_.at(targetId)->status = ACTIVE;
+        agentInfos_.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
+    }
+
+    void AgentManager::stopAgent(int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        
+        agentMap_.at(targetId).first->stop();
+        agentInfos_.at(targetId)->status = IDLE;
+        agentInfos_.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;        
+    }
+
+    void AgentManager::destroyAgent(int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        int targetType = agentMap_.at(targetId).second;
+        
+        currentNumbers_.at(targetType)--;
+        
+        delete agentMap_.at(targetId).first;
+        agentMap_.erase(targetId);
+
+        delete agentInfos_.at(targetId);
+        agentInfos_.erase(targetId);
+        
+        agentIds_.at(targetType).erase(std::remove(agentIds_.at(targetType).begin(), agentIds_.at(targetType).end(), targetId), agentIds_.at(targetType).end());
+    }
+
+    Postmaster* AgentManager::getPostmaster()
+    {
+        return postmaster_;
+    }
+
+    shared_ptr<Memory> AgentManager::getAgentInfo(int senderId, int senderType, int targetId)
+    {
+        lock_guard<mutex> lock(agentLock_);
+        int targetType = agentMap_.at(targetId).second;
+
+        if(!checkSender(senderType, targetType))
         {
-            throw UnautorizedAccessException((char*)"The sender is not autorized to access info of this type of agent");
+            throw UnautorizedAccessException("The sender is not autorized to access info of this type of agent");
         }
 
-        AgentInfo* info = agentInfos.at(targetId);
+        AgentInfo* info = agentInfos_.at(targetId);
         auto res = make_shared<Memory>();
         res->addTuple(info->agentId, info->agentType, info->status, info->creationTime, info->lastStatusChange);
         return res;
     }
 
-    shared_ptr<Memory> AgentManager::GetAgentInfos(int senderId, int senderType, int targetType)
+    shared_ptr<Memory> AgentManager::getAgentInfos(int senderId, int senderType, int targetType)
     {
-        if(!CheckSender(senderType, targetType))
+        if(!checkSender(senderType, targetType))
         {
-            throw UnautorizedAccessException((char*)"The sender is not autorized to access info of this type of agent");
+            throw UnautorizedAccessException("The sender is not autorized to access info of this type of agent");
         }
 
         auto res = make_shared<Memory>();
         int c = 0;
 
-        lock_guard<mutex> lock(agentLock);
+        lock_guard<mutex> lock(agentLock_);
 
-        for(int targetId : agentIds.at(targetType))
+        for(int targetId : agentIds_.at(targetType))
         {            
-            AgentInfo* info = agentInfos.at(targetId);
+            AgentInfo* info = agentInfos_.at(targetId);
             res->addTuple(info->agentId, info->agentType, info->status, info->creationTime, info->lastStatusChange);            
         }
 
         return res;
     }
-        
-    void AgentManager::StartInitialAgents()
+
+    void AgentManager::commit(long transactionId)
     {
-        for(int type : initialAgents)
-        {
-            for(int id : agentIds.at(type))
+        lock_guard<mutex> lock(logLock_);
+        auto it = transactionLog_.find(transactionId);
+
+        if(it != transactionLog_.end())
+        {            
+            for(auto p : it->second)
             {
-                agentMap.at(id).first->Start();
-                agentInfos.at(id)->status = ACTIVE;
-                SendBeginTransaction(agentMap.at(id).first, initialParameters.at(type));
+                switch (p.first)
+                {
+                case CREATE:
+                    createAgent(p.second);
+                    break;
+
+                case CREATEANDSTART:
+                    createAndStartAgent(p.second);
+                    break;
+
+                case DESTROY:
+                    destroyAgent(p.second);
+                    break;
+                
+                case START:
+                    startAgent(p.second);
+                    break;
+
+                case STOP:
+                    stopAgent(p.second);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        
+        transactionLog_.erase(transactionId);
+    }
+
+    void AgentManager::rollback(long transactionId)
+    {
+        transactionLog_.erase(transactionId);
+    }
+
+    void AgentManager::startInitialAgents()
+    {
+        for(int type : initialAgents_)
+        {
+            for(int id : agentIds_.at(type))
+            {
+                agentMap_.at(id).first->start();
+                agentInfos_.at(id)->status = ACTIVE;
             }
         }
     }
 
     AgentManager::~AgentManager()
     {
-        for(auto& [key, val] : agentMap)
-        {
-            delete val.first;
-        }
-
-        for(auto& [key, val] : corePools)
+        for(auto& [key, val] : agentPools_)
         {
             delete val;
         }
 
-        delete postmaster;
-        delete tfactory;
+        for(auto& [key, val] : agentInfos_)
+        {
+            delete val;
+        }
+
+        delete postmaster_;
         
-        maxNumbers.clear();
-        corePools.clear();
-        agentMap.clear();
-        supervisors.clear();
-        subordinates.clear();
-        tools.clear();        
+        maxNumbers_.clear();
+        agentPools_.clear();
+        agentMap_.clear();
+        supervisors_.clear();
+        subordinates_.clear();
+        tools_.clear();        
     }
 }

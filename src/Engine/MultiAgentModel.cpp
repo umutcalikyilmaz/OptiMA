@@ -1,17 +1,17 @@
-#include <Engine/MultiAgentModel.h>
+#include "OptiMA/Engine/MultiAgentModel.h"
 
 namespace OptiMA
 {
-    MultiAgentModel::MultiAgentModel() : agentTemplateNumber(0), pluginNumber(0), totalMaxNumber(0),
-    schedulerSettingsAdded(false), estimatorAdded(false), timeCheck(false), numCheck(false),
-    initialAgentsAdded(false), keepStats(false) { }
+    MultiAgentModel::MultiAgentModel() : agentTemplateNumber_(0), pluginNumber_(0), totalMaxNumber_(0),
+    schedulerSettingsAdded_(false), estimatorAdded_(false), numCheck_(false), initialAgentsAdded_(false),
+    keepStats_(false), tfactorySet_(false) { }
 
-    void MultiAgentModel::AddSupervisor(int supervisorTemplateId, int subordinateTemplateId)
+    void MultiAgentModel::addSupervisor(int supervisorTemplateId, int subordinateTemplateId)
     {
         bool found1 = false;
         bool found2 = false;
 
-        for(int id : agentCoreIds)
+        for(int id : agentCoreIds_)
         {
             if(id == supervisorTemplateId)
             {
@@ -26,24 +26,24 @@ namespace OptiMA
 
         if(!found1)
         {
-            throw InvalidModelParameterException((char*)"Supervisor id does not exist");
+            throw InvalidModelParameterException("Supervisor id does not exist");
         }
 
         if(!found2)
         {
-            throw InvalidModelParameterException((char*)"Subordinate id does not exist");
+            throw InvalidModelParameterException("Subordinate id does not exist");
         }
 
-        relationships.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
-        communications.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
+        relationships_.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
+        communications_.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
     }
 
-    void MultiAgentModel::AddCommunication(int templateId1, int templateId2)
+    void MultiAgentModel::addCommunication(int templateId1, int templateId2)
     {
         bool found1 = false;
         bool found2 = false;
 
-        for(int id : agentCoreIds)
+        for(int id : agentCoreIds_)
         {
             if(id == templateId1)
             {
@@ -58,29 +58,29 @@ namespace OptiMA
 
         if(!(found1 && found2))
         {
-            throw InvalidModelParameterException((char*)"One of the template ids does not exist");
+            throw InvalidModelParameterException("One of the template ids does not exist");
         }
 
-        communications.push_back(make_pair(templateId1, templateId2));
+        communications_.push_back(make_pair(templateId1, templateId2));
     }
 
-    void MultiAgentModel::AddEstimator(Estimator* estimator)
+    void MultiAgentModel::addEstimator(Estimator* estimator)
     {
-        if(estimatorAdded)
+        if(estimatorAdded_)
         {
-            throw InvalidModelParameterException((char*)"An estimator object has already been added");
+            throw InvalidModelParameterException("An estimator object has already been added");
         }
 
-        estimatorAdded = true;
-        defaultEstimator = false;
-        this->estimator = estimator;
-    }    
+        estimatorAdded_ = true;
+        defaultEstimator_ = false;
+        this->estimator_ = estimator;
+    }
 
-    void MultiAgentModel::AllowPluginUse(int agentTemplateId, int pluginId)
+    void MultiAgentModel::allowPluginUse(int agentTemplateId, int pluginId)
     {
         bool found = false;
 
-        for(int id : agentCoreIds)
+        for(int id : agentCoreIds_)
         {
             if(id == agentTemplateId)
             {
@@ -91,12 +91,12 @@ namespace OptiMA
 
         if(!found)
         {
-            throw InvalidModelParameterException((char*)"Agent template id does not exist");
+            throw InvalidModelParameterException("Agent template id does not exist");
         }
 
         found = false;
 
-        for(int id : pluginIds)
+        for(int id : pluginIds_)
         {
             if(id == pluginId)
             {
@@ -107,81 +107,51 @@ namespace OptiMA
 
         if(!found)
         {
-            throw InvalidModelParameterException((char*)"Plugin id does not exist");
+            throw InvalidModelParameterException("Plugin id does not exist");
         }
 
-        pluginAccesses.push_back(make_pair(agentTemplateId, pluginId));
+        pluginAccesses_.push_back(make_pair(agentTemplateId, pluginId));
     }
 
-    void MultiAgentModel::AddHaltingAgent(int agentTemplateId)
+    void MultiAgentModel::addSchedulerSettings(SchedulerSettings* settings)
     {
-        bool found = false;
-
-        for(int id : agentCoreIds)
-        {
-            if(agentTemplateId == id)
-            {
-                found = true;
-                break;
-            }
-        }
-
-        if(!found)
-        {
-            throw InvalidModelParameterException((char*)"Agent template id does not exist");
-        }
-
-        found = false;
-
-        for(int id : haltingAgents)
-        {
-            if(agentTemplateId == id)
-            {
-                found == true;
-                break;
-            }
-        }
-
-        if(!found)
-        {
-            haltingAgents.push_back(agentTemplateId);
-        }
+        schSettings_ = settings;
+        schedulerSettingsAdded_ = true;
     }
 
-    void MultiAgentModel::AddSchedulerSettings(SchedulerSettings* settings)
+    void MultiAgentModel::setThreadNumber(int threadNumber)
     {
-        schSettings = settings;
-        schedulerSettingsAdded = true;
+        threadNumber_ = threadNumber;
     }
 
-    void MultiAgentModel::SetThreadNumber(int threadNumber)
+    void MultiAgentModel::setTransactionFactory(TransactionFactory* tfactory)
     {
-        this->threadNumber = threadNumber;
+        tfactory_ = tfactory;
+        tfactorySet_ = true;
     }
 
-    void MultiAgentModel::SetBatchSize(int batchSize)
+    void MultiAgentModel::setBatchSize(int batchSize)
     {
-        numCheck = true;
-        this->batchSize = batchSize;
+        numCheck_ = true;
+        batchSize_ = batchSize;
     }
 
-    void MultiAgentModel::SetTimeStep(double timeStep)
+    void MultiAgentModel::setTrigger()
     {
-        timeCheck = true;
-        this->timeStep = timeStep;
+        trigger_ = true;
     }
 
-    void MultiAgentModel::KeepStatsFile(string statsFilePath)
+    void MultiAgentModel::keepStatsFile(string statsFilePath)
     {
-        keepStats = true;
-        keepStatsFilePath = statsFilePath;
+        keepStats_ = true;
+        keepStatsFilePath_ = statsFilePath;
     }
 
-    void MultiAgentModel::UseDefaultEstimator(string statsFilePath)
+    void MultiAgentModel::useDefaultEstimator(string statsFilePath)
     {
-        defaultEstimator = true;
-        estimatorAdded = true;
-        defaultEstimatorFilePath = statsFilePath;
+        defaultEstimator_ = true;
+        estimatorAdded_ = true;
+        defaultEstimatorFilePath_ = statsFilePath;
     }
 
     MultiAgentModel::~MultiAgentModel()

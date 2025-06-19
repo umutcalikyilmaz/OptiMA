@@ -1,25 +1,21 @@
-#include <AgentModels/PostBox.h>
+#include "OptiMA/AgentModels/PostBox.h"
 
 namespace OptiMA
 {
-    queue<Message*> messages;
-    vector<Message*> trash;
-    atomic_bool lock;
-
-    void PostBox::SendMessage(shared_ptr<Message> msg)
+    void PostBox::sendMessage(shared_ptr<Message> msg)
     {
-        messages.push(msg);
+        messages_.push(msg);
     }
 
-    queue<shared_ptr<Message>> PostBox::CheckMessages()
+    queue<shared_ptr<Message>> PostBox::checkMessages()
     {        
         queue<shared_ptr<Message>> res;
-        lock_guard<mutex> lock(postLock);
+        lock_guard<mutex> lock(postLock_);
 
-        while(!messages.empty())
+        while(!messages_.empty())
         {
-            res.push(messages.front());
-            messages.pop();
+            res.push(messages_.front());
+            messages_.pop();
         }
 
         return res;
@@ -27,9 +23,9 @@ namespace OptiMA
 
     PostBox::~PostBox()
     {
-        while(!messages.empty())
+        while(!messages_.empty())
         {
-            messages.pop();
+            messages_.pop();
         }
     }
 }

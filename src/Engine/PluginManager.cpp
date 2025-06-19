@@ -1,4 +1,4 @@
-#include <Engine/PluginManager.h>
+#include "OptiMA/Engine/PluginManager.h"
 
 namespace OptiMA
 {
@@ -9,16 +9,15 @@ namespace OptiMA
 
         for(int id : pluginIds)
         {
-            //instancePools[id] = new InstancePool(factories[c], pluginTypes[c], pluginIds[c]);
-            instances[id] = factories[c]->CreatePluginInstance();
-            instances[id]->pluginId = id;
-            types[id] = pluginTypes[c];
-            statuses[id] = FREE;
-            allowedAgentTypes[id] = vector<int>();
+            instances_[id] = factories[c]->createPluginInstance();
+            instances_[id]->pluginId_ = id;
+            types_[id] = pluginTypes[c];
+            statuses_[id] = FREE;
+            allowedAgentTypes_[id] = vector<int>();
 
             if(pluginTypes[c] == NONSHAREABLE)
             {
-                nonShareable.insert(id);
+                nonShareable_.insert(id);
             }
 
             c++;
@@ -26,16 +25,16 @@ namespace OptiMA
 
         for(pair<int,int> p : pluginAccesses)
         {
-            allowedAgentTypes[p.second].push_back(p.first);
+            allowedAgentTypes_[p.second].push_back(p.first);
         }
     }
 
-    PluginInstance* PluginManager::SeizePlugin(int pluginId, int agentType)
+    PluginInstance* PluginManager::seizePlugin(int pluginId, int agentType)
     {
-        lock_guard<mutex> lock(pluginLock);
+        lock_guard<mutex> lock(pluginLock_);
         bool found = false;
 
-        for(int at : allowedAgentTypes[pluginId])
+        for(int at : allowedAgentTypes_[pluginId])
         {
             if(at == agentType)
             {
@@ -46,58 +45,36 @@ namespace OptiMA
 
         if(!found)
         {
-            throw UnautorizedAccessException((char*)"This type of agent is not allowed to seize this plugin");
+            throw UnautorizedAccessException("This type of agent is not allowed to seize this plugin");
         }
 
-        if(types[pluginId] == NONSHAREABLE)
+        if(types_[pluginId] == NONSHAREABLE)
         {
-            if(statuses[pluginId] == SEIZED)
+            if(statuses_[pluginId] == SEIZED)
             {
-                throw UnautorizedAccessException((char*)"This plugin is seized by another transaction");
+                throw UnautorizedAccessException("This plugin is seized by another transaction");
             }            
             
-            statuses[pluginId] = SEIZED;
-            return instances[pluginId];
+            statuses_[pluginId] = SEIZED;
+            return instances_[pluginId];
         }
 
-        return instances[pluginId];
-
-        /*
-        if(types[pluginId] == NONSHAREABLE)
-        {
-            if(statuses[pluginId] == SEIZED)
-            {
-                throw UnautorizedAccessException((char*)"This plugin is seized by another transaction");
-            }            
-            
-            PluginInstance* res = instancePools[pluginId]->GetInstance();
-            statuses[pluginId] = SEIZED;
-            return res;
-        }
-
-        return instancePools[pluginId]->GetInstance();
-        */
+        return instances_[pluginId];
     }
 
-    void PluginManager::ReleasePlugin(PluginInstance* instance)
+    void PluginManager::releasePlugin(PluginInstance* instance)
     {
-        lock_guard<mutex> lock(pluginLock);
-        statuses[instance->pluginId] = FREE;
-
-        /*
-        lock_guard<mutex> lock(pluginLock);
-        instancePools[instance->pluginId]->ReturnInstance(instance);
-        statuses[instance->pluginId] = FREE;
-        */
+        lock_guard<mutex> lock(pluginLock_);
+        statuses_[instance->pluginId_] = FREE;
     }
 
-    const set<int> PluginManager::GetNonShareable(const set<int>& plugins)
+    const set<int> PluginManager::getNonShareable(const set<int>& plugins)
     {
         set<int> res;
 
         for(int p : plugins)
         {
-            if(types[p] == NONSHAREABLE)
+            if(types_[p] == NONSHAREABLE)
             {
                 res.insert(p);
             }
@@ -106,23 +83,16 @@ namespace OptiMA
         return res;
     }
 
-    const set<int>& PluginManager::GetNonShareable()
+    const set<int>& PluginManager::getNonShareable()
     {
-        return nonShareable;
+        return nonShareable_;
     }
 
     PluginManager::~PluginManager()
     {
-        for(auto p : instances)
+        for(auto p : instances_)
         {
             delete p.second;
         }
-
-        /*
-        for(auto p : instancePools)
-        {
-            delete p.second;
-        }
-            */
     }
 }

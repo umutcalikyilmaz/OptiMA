@@ -1,68 +1,31 @@
-#include <Engine/TransactionFactory.h>
+#include "OptiMA/Engine/TransactionFactory.h"
 
 namespace OptiMA
 {
-    unique_ptr<ITransaction> TransactionFactory::GenerateCommunicateTransaction(Agent* owner, Postmaster* postmaster,
-    shared_ptr<Message> msg, int receiverId)
+    void TransactionFactory::initiate()
     {
-        return  make_unique<Communicate>(owner, postmaster, msg, receiverId);
+        vector<unique_ptr<ITransaction>> txns = generateInitialTransactions();
+        int c = txns.size();
+
+        for(int i = 0; i < c; i++)
+        {
+            listener_->sendTransaction(move(txns[i]));
+        } 
     }
 
-    unique_ptr<ITransaction> TransactionFactory::GenerateCommunicateTransaction(Agent* owner, Postmaster* postmaster,
-    shared_ptr<Message> msg, int receiverIdOrType, bool toAll)
+    void TransactionFactory::postProcess(unique_ptr<ITransaction> txn, shared_ptr<TransactionResult> result)
     {
-        return make_unique<Communicate>(owner, postmaster, msg, receiverIdOrType, toAll);
+        vector<unique_ptr<ITransaction>> txns = generateTransactions(move(txn), result);
+        int c = txns.size();
+
+        for(int i = 0; i < c; i++)
+        {
+            listener_->sendTransaction(move(txns[i]));
+        } 
     }
 
-    unique_ptr<ITransaction> TransactionFactory::GenerateCreateAgentTransaction(Agent* owner, IAgentManager* amanager,
-    int targetType)
+    void TransactionFactory::insertListener(IListener* listener)
     {
-        return make_unique<CreateAgent>(owner, amanager, targetType);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateCreateAgentTransaction(Agent* owner, IAgentManager* amanager,
-    int targetType, shared_ptr<Memory> initialParameters)
-    {
-        return make_unique<CreateAgent>(owner, amanager, targetType, initialParameters);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateDestroyAgentTransaction(Agent* owner, IAgentManager* amanager,
-    int targetId)
-    {
-        return make_unique<DestroyAgent>(owner, amanager, targetId);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateGetAgentInfoTransaction(Agent* owner, IAgentManager* amanager,
-    int targetId)
-    {
-        return make_unique<GetAgentInfo>(owner, amanager, targetId);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateGetAgentInfoTransaction(Agent* owner, IAgentManager* amanager,
-    int targetIdOrType, bool fromAll)
-    {
-        return make_unique<GetAgentInfo>(owner, amanager, targetIdOrType, fromAll);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateHaltProgramTransaction(Agent* owner, shared_ptr<Memory> outputParameters)
-    {
-        return make_unique<HaltProgram>(owner, outputParameters);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateStartAgentTransaction(Agent* owner, IAgentManager* amanager,
-    int targetId, shared_ptr<Memory> initialParameters)
-    {
-        return make_unique<StartAgent>(owner, amanager, targetId, initialParameters);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateStopAgentTransaction(Agent* owner, IAgentManager* amanager,
-    int targetId)
-    {
-        return make_unique<StopAgent>(owner, amanager, targetId);
-    }
-
-    unique_ptr<ITransaction> TransactionFactory::GenerateNullTransaction()
-    {
-        return nullptr;
+        listener_ = listener;
     }
 }

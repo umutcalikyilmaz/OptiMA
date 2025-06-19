@@ -1,176 +1,145 @@
-#include <Engine/Executor.h>
-#include <iostream>
+#include "OptiMA/Engine/Executor.h"
 
 namespace OptiMA
 {
-    void Executor::LockPlugins(const set<int>& plugins)
+    void Executor::lockPlugins(const set<int>& plugins)
     {
         for(auto p : plugins)
         {
-            pluginLocks[p].lock();
+            pluginLocks_.at(p)->lock();
         }
     }
 
-    void Executor::UnlockPlugins(const set<int>& plugins)
+    void Executor::unlockPlugins(const set<int>& plugins)
     {
         for(auto p : plugins)
         {
-            pluginLocks[p].unlock();
+            pluginLocks_.at(p)->unlock();
         }
     }
 
-    void Executor::ExecuteTransaction(unique_ptr<ITransaction> txn, ExecutorState* state)
+    void Executor::executeTransaction(unique_ptr<ITransaction> txn, ExecutorState* state)
     {
         if(txn == nullptr)
         {
             return;
         }
 
-        if(txn->GetTransactionType() == HALTPROGRAM)
-        {
-            int at = txn->GetAgentType();
+        const set<int> nonShareablePlugins = txn->getNonShareblePlugins();        
 
-            for(int a : haltingAgents)
-            {
-                if(a == at)
-                {                    
-                    driver->HaltProgram(txn->GetOutputParameters());
-                    return;
-                }
-            }
-        }
-        int a = txn->GetAgentType();
-        TransactionType tt = txn->GetTransactionType();
-        int st = txn->GetSubType();
-
-        if(a == 2 && tt == OPERATE, st == 1)
-        {
-            int rfr = 0;
-        }
-
-        const set<int> nonShareablePlugins = txn->GetNonShareblePlugins();
-
-        
-
-        LockPlugins(nonShareablePlugins);
+        lockPlugins(nonShareablePlugins);
 
         double beg = chrono::steady_clock::now().time_since_epoch().count();
-        unique_ptr<ITransaction> res = txn->Execute();
+        shared_ptr<TransactionResult> res = txn->execute();
 
-        if(keepStats)
+        if(keepStats_)
         {            
             double end = chrono::steady_clock::now().time_since_epoch().count();            
-            state->totalTimes[txn->GetAgentType()][txn->GetTransactionType()][txn->GetSubType()] += end - beg;
-            state->counts[txn->GetAgentType()][txn->GetTransactionType()][txn->GetSubType()]++;
+            state->totalTimes[txn->getType()][txn->getSubType()] += end - beg;
+            state->counts[txn->getType()][txn->getSubType()]++;
         }
 
-        UnlockPlugins(nonShareablePlugins);
-        
+        unlockPlugins(nonShareablePlugins);
 
-        if(res != nullptr)
-        {
-            listener->SendTransaction(move(res));
-        }
-        
-        //if(txn->GetTransactionType() != OPERATE && txn->GetTransactionType() != PROCESS)
-        //cout << "Transaction type " << to_string(txn->GetTransactionType()) << "is executed.\n";
-        //cout << to_string(count++) << "\n";
+        tfactory_->postProcess(move(txn), res);        
     }
 
-    void Executor::Run(ExecutorState* state)
+    void Executor::run(ExecutorState* state)
     {
         while(state->started)
         {
-            unique_ptr<ITransaction> txn = state->txnQueue->Pull();
+            unique_ptr<ITransaction> txn = state->txnQueue->pull();
 
-            if(state->txnQueue->isEmpty())
+            if(trigger_ && state->txnQueue->isEmpty())
             {
-
+                listener_->trigger();
             }
 
-            ExecuteTransaction(move(txn), state);            
+            executeTransaction(move(txn), state);            
         }
     }
 
-    Executor::Executor(IDriver* driver, PluginManager* pmanager, int threadNum, const set<int>& nonshareablePlugins,
-    const vector<int>& haltingAgents, bool optimized, bool keepStats) : driver(driver), pmanager(pmanager),
-    listener(listener), lock(false), threadNum(threadNum), optimized(optimized), keepStats(keepStats),
-    haltingAgents(haltingAgents)
+    Executor::Executor(IDriver* driver, TransactionFactory* tfactory, PluginManager* pmanager, int threadNum,
+    const set<int>& nonshareablePlugins, bool optimized, bool trigger, bool keepStats) : driver_(driver), tfactory_(tfactory),
+    pmanager_(pmanager), lock_(false), threadNum_(threadNum), optimized_(optimized), trigger_(trigger), keepStats_(keepStats)
     {
-        states = new ExecutorState*[threadNum];
-        threads = new thread[threadNum];
-    }
+        states_ = new ExecutorState*[threadNum];
+        threads_ = new thread[threadNum];
+        set<int> nonShareable = pmanager_->getNonShareable();
 
-    void Executor::InsertTransactionQueue(TransactionQueue* txnQueue)
-    {
-        this->txnQueue = txnQueue;
-    }
-
-    void Executor::InsertListener(IListener* listener)
-    {
-        this->listener = listener;
-    }
-
-    void Executor::Start()
-    {
-        if(optimized)
+        for(int p : nonShareable)
         {
-            for(int i = 0; i < threadNum; i++)
+            pluginLocks_[p] = make_unique<mutex>();
+        }
+    }
+
+    void Executor::insertTransactionQueue(TransactionQueue* txnQueue)
+    {
+        txnQueue_ = txnQueue;
+    }
+
+    void Executor::insertListener(IListener* listener)
+    {
+        listener_ = listener;
+    }
+
+    void Executor::start()
+    {
+        if(optimized_)
+        {
+            for(int i = 0; i < threadNum_; i++)
             {
-                states[i] = new ExecutorState();
-                states[i]->started = true;
-                threads[i] = thread([this, state = states[i]]()
+                states_[i] = new ExecutorState();
+                states_[i]->started = true;
+                threads_[i] = thread([this, state = states_[i]]()
                 {
-                    this->Run(state);
+                    this->run(state);
                 });
             }
         }
         else
         {
-            for(int i = 0; i < threadNum; i++)
+            for(int i = 0; i < threadNum_; i++)
             {
-                states[i] = new ExecutorState(txnQueue);
-                states[i]->started = true;
-                threads[i] = thread([this, state = states[i]]()
+                states_[i] = new ExecutorState(txnQueue_);
+                states_[i]->started = true;
+                threads_[i] = thread([this, state = states_[i]]()
                 {
-                    this->Run(state);
+                    this->run(state);
                 });
             }
         }
     }
 
-    void Executor::AssignTransaction(unique_ptr<ITransaction> txn, int index)
+    void Executor::assignTransaction(unique_ptr<ITransaction> txn, int index)
     {
-        states[index]->txnQueue->Push(move(txn));
-        states[index]->running = true;
+        states_[index]->txnQueue->push(move(txn));
+        states_[index]->running = true;
     }
 
-    void Executor::Stop()
+    void Executor::stop()
     {
-        for(int i = 0; i < threadNum; i++)
+        for(int i = 0; i < threadNum_; i++)
         {
-            states[i]->started = false;
-            states[i]->txnQueue->Exit();
-            threads[i].join();
+            states_[i]->started = false;
+            states_[i]->txnQueue->exit();
+            threads_[i].join();
         }
     }
 
-    map<int,map<int,map<int,double>>> Executor::GetStats()
+    map<int,map<int,double>> Executor::getStats()
     {
-        map<int,map<int,map<int,double>>> res;
-        map<int,map<int,map<int,int>>> count;
+        map<int,map<int,double>> res;
+        map<int,map<int,int>> count;
 
-        for(int i = 0; i < threadNum; i++)
+        for(int i = 0; i < threadNum_; i++)
         {
-            for(auto p1 : states[i]->totalTimes)
+            for(auto p1 : states_[i]->totalTimes)
             {
                 for(auto p2 : p1.second)
                 {
-                    for(auto p3 : p2.second)
-                    {
-                        res[p1.first][p2.first][p3.first] += p3.second;
-                        count[p1.first][p2.first][p3.first] += states[i]->counts.at(p1.first).at(p2.first).at(p3.first);
-                    }
+                    res[p1.first][p2.first] += p2.second;
+                    count[p1.first][p2.first] += states_[i]->counts.at(p1.first).at(p2.first);
                 }
             }
         }
@@ -179,22 +148,21 @@ namespace OptiMA
         {
             for(auto p2 : p1.second)
             {
-                for(auto p3 : p2.second)
-                {
-                    res[p1.first][p2.first][p3.first] /= count.at(p1.first).at(p2.first).at(p3.first);
-                }
+                res[p1.first][p2.first] = res.at(p1.first).at(p2.first) / count.at(p1.first).at(p2.first);                
             }
         }
-        
 
+        for(int i = 0; i < threadNum_; i++)
+        {
+            delete states_[i];
+        }
+        
         return res;
     }
 
     Executor::~Executor()
     {
-        for(int i = 0; i < threadNum; i++)
-        {
-            delete states[i];
-        }
+        delete[] states_;
+        delete[] threads_;
     }
 }

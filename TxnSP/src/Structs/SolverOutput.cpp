@@ -1,6 +1,6 @@
-#include <Structs/SolverOutput.h>
+#include "TxnSP/Structs/SolverOutput.h"
 
-namespace TransactionScheduling
+namespace TxnSP
 {
 	int Comp(const void* a, const void* b)
 	{
@@ -20,51 +20,51 @@ namespace TransactionScheduling
 
 	SolverOutput::SolverOutput(Problem* prb, double runtime)
 	{
-		n = prb->GetN();
-		m = prb->GetM();
+		jobNumber = prb->getJobNumber();
+		machineNumber = prb->getMachineNumber();
 		makespan = 0;
-		mintime = DBL_MAX;
-		cores = vector<vector<int>>(m);
-		coreTimes = vector<double>(m);
-		startingTimes = vector<double>(n);
-		endingTimes = vector<double>(n);
-		assignments = vector<int>(n);
-		conflicts = vector<vector<int>>(n);
-		double* t = prb->GetT();
-		bool** conf = prb->GetConf();
+		minimumTime = DBL_MAX;
+		jobs = vector<vector<int>>(machineNumber);
+		processingTimes = vector<double>(machineNumber);
+		startingTimes = vector<double>(jobNumber);
+		endingTimes = vector<double>(jobNumber);
+		assignments = vector<int>(jobNumber);
+		conflicts = vector<vector<int>>(jobNumber);
+		double* t = prb->getLengths();
+		bool** conf = prb->getConflicts();
 
-		for(int i = 0; i < n; i++)
+		for(int i = 0; i < jobNumber; i++)
 		{
-			cores[i].push_back(i);
+			jobs[i].push_back(i);
 			double temp = 0;
 
 			for(int j = 0; j < i; j++)
 			{
-				if(conf[i][j] && temp < coreTimes[j])
+				if(conf[i][j] && temp < processingTimes[j])
 				{
-					temp = coreTimes[j];
+					temp = processingTimes[j];
 				}
 			}
 
 			startingTimes.push_back(temp);
 			endingTimes.push_back(temp + t[i]);
-			coreTimes.push_back(endingTimes[i]);
+			processingTimes.push_back(endingTimes[i]);
 			assignments.push_back(i);
 			
-			if(makespan < coreTimes[i])
+			if(makespan < processingTimes[i])
 			{
-				makespan = coreTimes[i];
+				makespan = processingTimes[i];
 			}
 
-			if(mintime > coreTimes[i])
+			if(minimumTime > processingTimes[i])
 			{
-				mintime = coreTimes[i];
+				minimumTime = processingTimes[i];
 			}
 		}
 
-		for(int i = 0; i < n; i++)
+		for(int i = 0; i < jobNumber; i++)
 		{
-			for(int j = 0; j < n; j++)
+			for(int j = 0; j < jobNumber; j++)
 			{
 				if(conf[i][j] && startingTimes[j] < startingTimes[i])
 				{
@@ -76,34 +76,34 @@ namespace TransactionScheduling
 
 	SolverOutput::SolverOutput(Problem* prb, int* state, double runtime)
 	{
-		n = prb->GetN();
-		m = prb->GetM();        
-        cores = vector<vector<int>>(m);
-		coreTimes = vector<double>(m);
-		startingTimes = vector<double>(n);
-		endingTimes = vector<double>(n);
-		assignments = vector<int>(n);
-		conflicts = vector<vector<int>>(n);
-		double* T = prb->GetT();
-        bool** conf = prb->GetConf();
-		int* coreNums = new int[m];
-		int* lastJobs = new int[m];
-		int* order = new int[m];
+		jobNumber = prb->getJobNumber();
+		machineNumber = prb->getMachineNumber();        
+        jobs = vector<vector<int>>(machineNumber);
+		processingTimes = vector<double>(machineNumber);
+		startingTimes = vector<double>(jobNumber);
+		endingTimes = vector<double>(jobNumber);
+		assignments = vector<int>(jobNumber);
+		conflicts = vector<vector<int>>(jobNumber);
+		double* T = prb->getLengths();
+        bool** conf = prb->getConflicts();
+		int* coreNums = new int[machineNumber];
+		int* lastJobs = new int[machineNumber];
+		int* order = new int[machineNumber];
 
 		double temp;
 		int job;
 
-		for(int i = 0; i < n; i++)
+		for(int i = 0; i < jobNumber; i++)
 		{
 			startingTimes.push_back(0);
 			endingTimes.push_back(0);
 		}
 
-		for (int i = 0; i < m; i++)
+		for (int i = 0; i < machineNumber; i++)
 		{
 			temp = 0;
 			job = state[i];
-			cores[i].push_back(job);
+			jobs[i].push_back(job);
 			lastJobs[i] = job;
 			coreNums[i] = 1;
 			
@@ -111,52 +111,52 @@ namespace TransactionScheduling
 			{
 				if (conf[job][lastJobs[order[j]]])
 				{
-					temp = coreTimes[order[j]];
+					temp = processingTimes[order[j]];
 					break;
 				}
 			}
 
 			startingTimes[job] = temp;
 			endingTimes[job] = temp + T[job];
-			coreTimes.push_back(endingTimes[job]);
-			int ind = FindPlace2(coreTimes, order, coreTimes[i], i);
-			Shift(order, ind, i);
+			processingTimes.push_back(endingTimes[job]);
+			int ind = findPlace2(processingTimes, order, processingTimes[i], i);
+			shift(order, ind, i);
 			order[ind] = i;
 		}
 
-		for(int i = m; i < n; i++)
+		for(int i = machineNumber; i < jobNumber; i++)
 		{
-			temp = coreTimes[order[0]];
+			temp = processingTimes[order[0]];
 			job = state[i];
 
-			cores[order[0]].push_back(job);
+			jobs[order[0]].push_back(job);
 			lastJobs[order[0]] = job;
 			coreNums[order[0]]++;
 
-			for (int j = m - 1; j > 0; j--)
+			for (int j = machineNumber - 1; j > 0; j--)
 			{
 				if (conf[job][lastJobs[order[j]]])
 				{
-					temp = coreTimes[order[j]];
+					temp = processingTimes[order[j]];
 					break;
 				}
 			}
 
 			startingTimes[job] = temp;
 			endingTimes[job] = temp + T[job];
-			coreTimes[order[0]] = endingTimes[job];
-			int ind = FindPlace(coreTimes, order, coreTimes[order[0]], m);
+			processingTimes[order[0]] = endingTimes[job];
+			int ind = findPlace(processingTimes, order, processingTimes[order[0]], machineNumber);
 			int tempi = order[0];
-			Shift(order, ind);
+			shift(order, ind);
 			order[ind] = tempi;
 		}
 
-		mintime = coreTimes[order[0]];
-		makespan = coreTimes[order[m - 1]];
+		minimumTime = processingTimes[order[0]];
+		makespan = processingTimes[order[machineNumber - 1]];
 
-		for(int i = 0; i < n; i++)
+		for(int i = 0; i < jobNumber; i++)
 		{
-			for(int j = 0; j < n; j++)
+			for(int j = 0; j < jobNumber; j++)
 			{
 				if(conf[i][j] && startingTimes[j] < startingTimes[i])
 				{
@@ -168,49 +168,47 @@ namespace TransactionScheduling
 	
     SolverOutput::SolverOutput(Problem* prb, Schedule* sch, double runtime) : runtime(runtime)
     {
-        n = sch->GetN();
-		m = sch->GetM();
-        makespan = sch->GetMakespan();
-		mintime = sch->GetMintime();
-        cores = vector<vector<int>>(m);
-		coreTimes = vector<double>(m);
-		startingTimes = vector<double>(n);
-		endingTimes = vector<double>(n);
-		assignments = vector<int>(n);
-		conflicts = vector<vector<int>>(n);
-        int* coreCount = new int[m];
-		int* tempLast = new int[m];
-        int* coreNums = sch->GetCoreNums();
-        double* ccoreTimes = sch->GetCoreTimes();
-        int** jobs = sch->GetJobs();
-        bool** conf = prb->GetConf();
-		double* T = prb->GetT();
+        jobNumber = sch->getJobNumber();
+		machineNumber = sch->getMachineNumber();
+        makespan = sch->getMakespan();
+		minimumTime = sch->getMinimumTime();
+        jobs = vector<vector<int>>(machineNumber);
+		processingTimes = vector<double>(machineNumber);
+		startingTimes = vector<double>(jobNumber);
+		endingTimes = vector<double>(jobNumber);
+		assignments = vector<int>(jobNumber);
+		conflicts = vector<vector<int>>(jobNumber);
+        int* coreCount = new int[machineNumber];
+		int* tempLast = new int[machineNumber];
+        int* coreNums = sch->getJobNumbers();
+        //double* ccoreTimes = sch->getProcessingTimes();
+        int** schjobs = sch->getJobs();
+        bool** conf = prb->getConflicts();
+		double* T = prb->getLengths();
 		double temp;	
 		int job;
 
-		//std::cout << "Begin\n";
-
-		for(int i = 0; i < m; i++)
+		for(int i = 0; i < machineNumber; i++)
 		{
 			for(int j = 0; j < coreNums[i]; j++)
 			{
-				cores[i].push_back(jobs[i][j]);
+				jobs[i].push_back(schjobs[i][j]);
 			}
 
-			job = jobs[i][0];
+			job = schjobs[i][0];
 			temp = 0;
 
 			for(int j = 0; j < i; j++)
 			{
-				if(conf[job][tempLast[j]] && temp < coreTimes[j])
+				if(conf[job][tempLast[j]] && temp < processingTimes[j])
 				{
-					temp = coreTimes[j];
+					temp = processingTimes[j];
 				}
 			}
 
 			startingTimes[job] = temp;
 			endingTimes[job] = temp + T[job];
-			coreTimes[i] = endingTimes[job];
+			processingTimes[i] = endingTimes[job];
 			assignments[job] = i;
 			tempLast[i] = job;
 			coreCount[i] = 1;
@@ -219,31 +217,31 @@ namespace TransactionScheduling
 		int minCore = 0;
 		temp = 1.7976931e+308;
 
-		for(int i = 0; i < m; i++)
+		for(int i = 0; i < machineNumber; i++)
 		{
-			if(coreTimes[i] < temp)
+			if(processingTimes[i] < temp)
 			{
 				minCore = i;
-				temp = coreTimes[i];
+				temp = processingTimes[i];
 			}
 		}
 
-		for(int i = m; i < n; i++)
+		for(int i = machineNumber; i < jobNumber; i++)
 		{			
-			job = jobs[minCore][coreCount[minCore]];
-			temp = coreTimes[minCore];
+			job = schjobs[minCore][coreCount[minCore]];
+			temp = processingTimes[minCore];
 
-			for(int j = 0; j < m; j++)
+			for(int j = 0; j < machineNumber; j++)
 			{
-				if(conf[job][tempLast[j]] && temp < coreTimes[j])
+				if(conf[job][tempLast[j]] && temp < processingTimes[j])
 				{
-					temp = coreTimes[j];
+					temp = processingTimes[j];
 				}
 			}
 
 			startingTimes[job] = temp;
 			endingTimes[job] = temp + T[job];
-			coreTimes[minCore] = endingTimes[job];
+			processingTimes[minCore] = endingTimes[job];
 			assignments[job] = minCore;
 			tempLast[minCore] = job;
 			coreCount[minCore]++;
@@ -252,12 +250,12 @@ namespace TransactionScheduling
 			minCore = 0;
 			temp = 1.7976931e+308;
 
-			for(int j = 0; j < m; j++)
+			for(int j = 0; j < machineNumber; j++)
 			{
-				if(coreTimes[j] < temp)
+				if(processingTimes[j] < temp)
 				{
 					minCore = j;
-					temp = coreTimes[j];
+					temp = processingTimes[j];
 				}
 			}
 		}
@@ -265,9 +263,9 @@ namespace TransactionScheduling
         delete[] coreCount;
 		delete[] tempLast;
 
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < jobNumber; i++)
 		{
-			for(int j = 0; j < n; j++)
+			for(int j = 0; j < jobNumber; j++)
 			{
 				if(conf[i][j] && startingTimes[j] < startingTimes[i])
 				{
@@ -279,24 +277,24 @@ namespace TransactionScheduling
 	
 	SolverOutput::SolverOutput(Problem* prb, int* x, double* s, double runtime) : runtime(runtime)
 	{
-		n = prb->GetN();
-        m = prb->GetM();
-        cores = vector<vector<int>>(m);
-		coreTimes = vector<double>(m);
-		startingTimes = vector<double>(n);
-		endingTimes = vector<double>(n);
-		assignments = vector<int>(n);
-		conflicts = vector<vector<int>>(n);
-		double* T = prb->GetT();
-        bool** conf = prb->GetConf();
+		jobNumber = prb->getJobNumber();
+        machineNumber = prb->getMachineNumber();
+        jobs = vector<vector<int>>(machineNumber);
+		processingTimes = vector<double>(machineNumber);
+		startingTimes = vector<double>(jobNumber);
+		endingTimes = vector<double>(jobNumber);
+		assignments = vector<int>(jobNumber);
+		conflicts = vector<vector<int>>(jobNumber);
+		double* T = prb->getLengths();
+        bool** conf = prb->getConflicts();
 
-		double* scpy = new double[n];
-		int* ind = new int[n];
-		bool* smt = new bool[n];
-        int* lastJobs = new int[m];
+		double* scpy = new double[jobNumber];
+		int* ind = new int[jobNumber];
+		bool* smt = new bool[jobNumber];
+        int* lastJobs = new int[machineNumber];
         int minimumCore = 0;
 
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < jobNumber; i++)
 		{
 			scpy[i] = s[i];
 			smt[i] = true;
@@ -304,11 +302,11 @@ namespace TransactionScheduling
             assignments[i] = x[i];
 		}
 
-		std::qsort(scpy, n, sizeof(double), Comp);
+		std::qsort(scpy, jobNumber, sizeof(double), Comp);
 
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < jobNumber; i++)
 		{	
-			for (int j = 0; j < n; j++)
+			for (int j = 0; j < jobNumber; j++)
 			{
 				if (scpy[i] - s[j] < 0.0000001 && scpy[i] - s[j] > -0.0000001 && smt[j])
 				{
@@ -319,11 +317,11 @@ namespace TransactionScheduling
 			}
 		}
 
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < jobNumber; i++)
 		{
-			cores[x[ind[i]]].push_back(ind[i]);
+			jobs[x[ind[i]]].push_back(ind[i]);
 
-			for(int j = 0; j < n; j++)
+			for(int j = 0; j < jobNumber; j++)
 			{
 				if(conf[i][j])
 				{
@@ -333,30 +331,30 @@ namespace TransactionScheduling
 		}
 
 		makespan = 0;
-		mintime = 1.79769310e+308;
+		minimumTime = 1.79769310e+308;
 
-		for (int i = 0; i < m; i++)
+		for (int i = 0; i < machineNumber; i++)
 		{
-			if (cores[i].size() > 0)
+			if (jobs[i].size() > 0)
 			{
-				lastJobs[i] = cores[i].back();
-				coreTimes[i] = s[lastJobs[i]] + T[lastJobs[i]];
+				lastJobs[i] = jobs[i].back();
+				processingTimes[i] = s[lastJobs[i]] + T[lastJobs[i]];
 			}
 			else
 			{
 				lastJobs[i] = -1;
-				coreTimes[i] = 0;
+				processingTimes[i] = 0;
 			}
 
-			if (coreTimes[i] <= mintime)
+			if (processingTimes[i] <= minimumTime)
 			{
-				mintime = coreTimes[i];
+				minimumTime = processingTimes[i];
 				minimumCore = i;
 			}
 
-			if (coreTimes[i] > makespan)
+			if (processingTimes[i] > makespan)
 			{
-				makespan = coreTimes[i];
+				makespan = processingTimes[i];
 			}
 		}
 

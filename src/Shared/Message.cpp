@@ -1,4 +1,4 @@
-#include <Shared/Message.h>
+#include "OptiMA/Shared/Message.h"
 
 namespace OptiMA
 {
@@ -10,23 +10,23 @@ namespace OptiMA
 
     Message::Message(string& prompt, shared_ptr<Memory> parameters) : prompt(prompt), parameters(parameters) { }
 
-    int Message::GetSenderId()
+    int Message::getSenderId()
     {
-        return senderId;
+        return senderId_;
     }
 
-    int Message::GetSenderType()
+    int Message::getSenderType()
     {
-        return senderType;
+        return senderType_;
     }
 
-    int Message::GetReceiverId()
+    int Message::getReceiverId()
     {
-        return receiverId;
+        return receiverId_;
     }
 
-    int Message::GetReceiverType()
+    int Message::getReceiverType()
     {
-        return receiverType;
+        return receiverType_;
     }
 }
