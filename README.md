@@ -48,3 +48,10 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 
 ### Model Creation
 #### Creating Plugins
+#### Creating Agent Templates
+#### Creating Transactions
+#### Creating Transadction Factory
+#### Creating Estimator (Optional)
+#### Creating Multi-Agent Model
+
+### Model Execution
