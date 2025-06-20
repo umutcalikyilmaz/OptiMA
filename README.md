@@ -48,9 +48,34 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 
 ### Model Creation
 #### Creating Plugins
+The user can create their own plugin classes to be used by the agents during execution. This is done by deriving the template class Plugin provided by OptiMA. When creating a plugin class, the operate function must be overrided. This function is called by an agent to use the plugin during execution.
+
+```
+class MyPlugin : public OptiMA::Plugin<MyPlugin>
+{
+public:
+    std::shared_ptr<OptiMA::Memory> operate(std::shared_ptr<OptiMA::Memory> inputParameters) override
+    {
+        // contents of the operate function
+    }
+};
+```
 #### Creating Agent Templates
+In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent template is created by overriding the AgentTemplate class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be invokable, it has to have a specific output type, i.e std::shared_ptr<OptiMA::Memory>. 
+
+```
+class MyPlugin : public OptiMA::Plugin<MyPlugin>
+{
+public:
+    std::shared_ptr<OptiMA::Memory> operate(std::shared_ptr<OptiMA::Memory> inputParameters) override
+    {
+        // contents of the operate function
+    }
+};
+```
+
 #### Creating Transactions
-#### Creating Transadction Factory
+#### Creating Transaction Factory
 #### Creating Estimator (Optional)
 #### Creating Multi-Agent Model
 
