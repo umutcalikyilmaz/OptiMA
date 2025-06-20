@@ -28,7 +28,7 @@ sudo make install
 ### Importing the Library
 After installing OptiMA, it can be imported to a project by adding the following lines in the CMakeLists.txt file.
 
-```
+```cmake
 find_package(TxnSP REQUIRED)
 find_package(OptiMA REQUIRED)
 target_link_libraries(my_project OptiMA::optima)
