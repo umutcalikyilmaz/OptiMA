@@ -1,5 +1,5 @@
 # OptiMA
-OptiMA is a framework for developing transaction-based multi-agent systems, and efficiently executing them on a limited hardware. The user can create a system by inserting the agent roles, plugins and engine components to the framework. OptiMA also has the option to use transaction scheduling during execution to ensure an improvement on the throughput of the system.
+THe optimum multi agent framework (OptiMA) is  a framework for developing transaction-based multi-agent systems, and efficiently executing them on a limited hardware. The user can create a system by inserting the agent roles, plugins and engine components to the framework. OptiMA also has the option to use transaction scheduling during execution to ensure an improvement on the throughput of the system.
 
 ## Citation
 OptiMA is developed as a part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The results of the study is compiled in a research paper, which is pending approval for publication. The information for citation will be provided after the publication.
@@ -22,5 +22,28 @@ mkdir build
 cd build
 cmake -DENABLE_MIP=ON ..
 sudo make install
+```
+
+## Usage
+
+### Importing the Library
+After installing OptiMA, it can be imported to a project by adding the following lines in the CMakeLists.txt file.
+
+```
+find_package(TxnSP REQUIRED)
+find_package(OptiMA REQUIRED)
+target_link_libraries(my_project OptiMA::optima)
+```
+
+The library is included in the project using the code below.
+
+```
+#include <OptiMA/OptiMA.h>
+```
+
+The framework also includes a benchmark module, FactoryFloor, that simulates the production process in a fully optimized manufacturing facility. To include the FactoryFloor benchmark, the following code is used.
+
+```
+#include <OptiMA/FactoryFloor.h>
 ```
 
