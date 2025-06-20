@@ -42,7 +42,7 @@ The library is included in the project using the code below.
 
 The framework also includes a benchmark module, FactoryFloor, that simulates the production process in a fully optimized manufacturing facility. To include the FactoryFloor benchmark, the following code is used.
 
-```
+```c++
 #include <OptiMA/FactoryFloor.h>
 ```
 
@@ -50,7 +50,7 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 #### Creating Plugins
 The user can create their own plugin classes to be used by the agents during execution. This is done by deriving the template class Plugin provided by OptiMA. When creating a plugin class, the operate function must be overrided. This function is called by an agent to use the plugin during execution.
 
-```
+```c++
 class MyPlugin : public OptiMA::Plugin<MyPlugin>
 {
 public:
@@ -63,7 +63,7 @@ public:
 #### Creating Agent Templates
 In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent template is created by overriding the AgentTemplate class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a specific output type, but there is no restirictions on the signature of the input parameters. An exemple agent template class is given below.
 
-```
+```c++
 class MyAgentTemplate : public OptiMA::AgentTemplate<MyAgentTemplate>
 {
 public:
