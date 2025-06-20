@@ -25,7 +25,6 @@ sudo make install
 ```
 
 ## Usage
-
 ### Importing the Library
 After installing OptiMA, it can be imported to a project by adding the following lines in the CMakeLists.txt file.
 
@@ -47,3 +46,5 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 #include <OptiMA/FactoryFloor.h>
 ```
 
+### Model Creation
+#### Creating Plugins
