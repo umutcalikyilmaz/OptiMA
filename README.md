@@ -36,7 +36,7 @@ target_link_libraries(my_project OptiMA::optima)
 
 The library is included in the project using the code below.
 
-```
+```c++
 #include <OptiMA/OptiMA.h>
 ```
 
