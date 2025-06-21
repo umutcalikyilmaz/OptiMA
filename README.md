@@ -164,15 +164,14 @@ class MyTransactionFactory : public OptiMA::TransactionFactory {
         // contents of the generateInitialTransactions function
     }
 
-    vector<unique_ptr<ITransaction>> generateTransactions(unique_ptr<ITransaction> txn, shared_ptr<TransactionResult> result) override {
-        // contents of the generateInitialTransactions function
-    }
-    
+    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, shared_ptr<OptiMA::TransactionResult> result) override {
+        // contents of the generateTransactions function
+    }    
 };
-
 ```
 
 #### Creating Estimator (Optional)
+Estimator module is used to estimate the lengths of the transactions during model execution. The estimated lengths are used for the schedule optimization process. OptiMA includes a default estimator module that keeps the statistics for different transaction types and subtypes, and uses them for estimation. 
 #### Creating Multi-Agent Model
 
 ### Model Execution
