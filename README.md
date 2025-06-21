@@ -46,6 +46,10 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 #include <OptiMA/FactoryFloor.h>
 ```
 
+### Shared Classes
+
+OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transfering multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. 
+
 ### Model Creation
 #### Creating Plugins
 The user can create their own plugin classes to be used by the agents during execution. This is done by deriving the template class Plugin provided by OptiMA. When creating a plugin class, the operate function must be overrided. This function is called by an agent to use the plugin during execution.
