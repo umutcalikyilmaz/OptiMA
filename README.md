@@ -48,7 +48,11 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 
 ### Shared Classes
 
-OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transfering multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. 
+OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transfering multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `OptiMA::Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. These objects are managed using `std::shared_ptr` instead of being copied or using raw pointers for performance and safety issues. The user can create a new `OptiMA::Memory` object as
+
+```c++
+std::shared_ptr<OptiMA::Memory> memory = OptiMA::generateMemeory()     \\ constructs a OptiMA::Memory and returns the std::shared_ptr to this object
+```
 
 ### Model Creation
 #### Creating Plugins
