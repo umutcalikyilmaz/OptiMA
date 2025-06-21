@@ -46,13 +46,35 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 #include <OptiMA/FactoryFloor.h>
 ```
 
-### Shared Classes
+### Memory Class
 
-OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transfering multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `OptiMA::Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. These objects are managed using `std::shared_ptr` instead of being copied or using raw pointers for performance and safety issues. The user can create a new `OptiMA::Memory` object as
+OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transfering multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `OptiMA::Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. These objects are managed using `std::shared_ptr` instead of being copied or using raw pointers for performance and safety issues. The code block below shows an example of creating a `OptiMA::Memory`, inserting and retrieveing two `std::tuple` objects into it.
 
 ```c++
-std::shared_ptr<OptiMA::Memory> memory = OptiMA::generateMemeory()     \\ constructs a OptiMA::Memory and returns the std::shared_ptr to this object
+// constructs a OptiMA::Memory and returns the std::shared_ptr to this object
+std::shared_ptr<OptiMA::Memory> memory = OptiMA::generateMemory();     
+
+// A std::tuple<int, double, bool> is created and inserted into memory
+memory->addTuple(
+    intValue,        //an example variable of integer type
+    doubleValue,     //an example variable of double type
+    boolValue        //an example variable of boolean type
+);
+
+// A std::tuple<std::string, double> is created and inserted into memory
+memory->addTuple(
+    stringValue,        //an example variable of std::string type
+    doubleValue,     //an example variable of double type
+);
+
+// the first tuple is retrieved
+std::tuple<int, double, bool> firstTuple = memory->getTuple<int, double, bool>(0);
+
+// the second tuple is retrieved   
+std::tuple<std::string, double> secondTuple = memory->getTuple<std::string, double>(1);
 ```
+
+
 
 ### Model Creation
 #### Creating Plugins
