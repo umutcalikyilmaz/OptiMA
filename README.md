@@ -91,7 +91,7 @@ public:
 };
 ```
 #### Creating Agent Templates
-In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the AgentTemplate class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restirictions on the signature of the input parameters. An exemple agent template class is given below.
+In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the `OptiMA::AgentTemplate` class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restirictions on the signature of the input parameters. An exemple agent template class is given below.
 
 ```c++
 class MyAgentTemplate : public OptiMA::AgentTemplate<MyAgentTemplate>
@@ -104,14 +104,56 @@ public:
 
     std::shared_ptr<OptiMA::Memory> callableFunction2(int input)
     {
-        // contents of the callableFunction1
+        // contents of the callableFunction2
     }
 };
 ```
 
 #### Creating Transactions
 
+The user is supposed to create the classes of transactions that are going to be used to create transaction objects during model executions. A transaction class is created by deriving the `OptiMA::Transaction` class. This class does not have a default constructor, so a user-defined transaction class is required to call one of the two constructors of `OptiMA::Transaction`. The purpose of this structure is to force the user to provide the necessary information when creating a transaction class, such as the type of the transaction, subtype of the transaction and the set of plugins to be used during the execution of the transaction.
 
+When creating a transaction class, the `OptiMA::Transaction::procedure` function is required to be overrided, which defines the operation to be run during the execution of the transaction. The user also has the option to override the `OptiMA::Transaction::commitProcedure` and `OptiMA::Transaction::rollbackProcedure` functions that are executed when the transaction is commited and rolled back respectively. Two example transaction classes are shown below.
+
+```c++
+// a transaction class 
+class MyTransaction1 : public OptiMA::Transaction
+{
+    // First constructor for the OptiMA::Transaction class is used
+    MyTransaction1(int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
+        transactionType,        // type of the transaction (used by framework components during execution)
+        transactionSubType,     // subtype of the transaction (used by framework components during execution)
+        pluginSet,              // set of plugins used during execution (used for the locking process during execution)
+    )
+    {
+        // contents of the constructor
+    }
+
+    // Second constructor for the OptiMA::Transaction class is used
+    MyTransaction1(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
+        agents,                // vector of seized agents that can be used by the transaction
+        transactionType,       // type of the transaction (used by framework components during execution)
+        transactionSubType,    // subtype of the transaction (used by framework components during execution)
+        pluginSet,             // set of plugins used during execution (used for the locking process during execution)
+    )
+    {
+        // contents of the constructor
+    }
+
+    shared_ptr<Memory> procedure() override {
+        // contents of the procedure function
+    }
+
+    void commitProcedure() {
+        // contents of the commitProcedure function
+    }
+
+    void rollbackProcedure() {
+        // contents of the rollbackProcedure function
+    }
+};
+
+```
 #### Creating Transaction Factory
 #### Creating Estimator (Optional)
 #### Creating Multi-Agent Model
