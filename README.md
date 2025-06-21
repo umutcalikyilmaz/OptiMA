@@ -171,7 +171,9 @@ class MyTransactionFactory : public OptiMA::TransactionFactory {
 ```
 
 #### Creating Estimator (Optional)
-Estimator module is used to estimate the lengths of the transactions during model execution. The estimated lengths are used for the schedule optimization process. OptiMA includes a default estimator module that keeps the statistics for different transaction types and subtypes, and uses them for estimation. 
+Estimator module is used to estimate the lengths of the transactions during model execution. The estimated lengths are used for the schedule optimization process. OptiMA includes a default estimator module that keeps the statistics for different transaction types and subtypes, and uses them for estimation. To do this, first the model should be executed without optimization to keep statistics, which can then used for an optimized execution.
+
+The user is allowed to implement their own estimator, if the performance of the default estimator is unsatisfactory for the 
 #### Creating Multi-Agent Model
 
 ### Model Execution
