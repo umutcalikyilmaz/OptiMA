@@ -91,7 +91,7 @@ public:
 };
 ```
 #### Creating Agent Templates
-In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent template is created by overriding the AgentTemplate class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a specific output type, but there is no restirictions on the signature of the input parameters. An exemple agent template class is given below.
+In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the AgentTemplate class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restirictions on the signature of the input parameters. An exemple agent template class is given below.
 
 ```c++
 class MyAgentTemplate : public OptiMA::AgentTemplate<MyAgentTemplate>
@@ -110,6 +110,8 @@ public:
 ```
 
 #### Creating Transactions
+
+
 #### Creating Transaction Factory
 #### Creating Estimator (Optional)
 #### Creating Multi-Agent Model
