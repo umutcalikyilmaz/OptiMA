@@ -117,10 +117,10 @@ When creating a transaction class, the `OptiMA::Transaction::procedure` function
 
 ```c++
 // a transaction class 
-class MyTransaction1 : public OptiMA::Transaction
+class MyTransaction : public OptiMA::Transaction
 {
     // First constructor for the OptiMA::Transaction class is used
-    MyTransaction1(int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
+    MyTransaction(int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
         transactionType,        // type of the transaction (used by framework components during execution)
         transactionSubType,     // subtype of the transaction (used by framework components during execution)
         pluginSet,              // set of plugins used during execution (used for the locking process during execution)
@@ -130,7 +130,7 @@ class MyTransaction1 : public OptiMA::Transaction
     }
 
     // Second constructor for the OptiMA::Transaction class is used
-    MyTransaction1(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
+    MyTransaction(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
         agents,                // vector of seized agents that can be used by the transaction
         transactionType,       // type of the transaction (used by framework components during execution)
         transactionSubType,    // subtype of the transaction (used by framework components during execution)
@@ -152,9 +152,26 @@ class MyTransaction1 : public OptiMA::Transaction
         // contents of the rollbackProcedure function
     }
 };
-
 ```
 #### Creating Transaction Factory
+Transaction factory is a component of the framework that creates new transactions after execution of a transaction, depending on its results. The inner workings of this module are required to be provided by the user, since they heavily depend on the design of a specific multi-agent system. A model-specific transaction factory class is derived from the `OptiMA::TransactionFactory` class. Two functions of the base class, `OptiMA::TransactionFactory::generateInitialTransactions` and `OptiMA::TransactionFactory::generateTransactions` must be overrided by the user. The first one is called in the beginning of the model execution to create the initial transactions, and the second is called after each transaction execution to create new transactions depending on the result.
+
+```c++
+
+class MyTransactionFactory : public OptiMA::TransactionFactory {
+
+    std::vector<unique_ptr<OptiMA::ITransaction>> generateInitialTransactions() override {
+        // contents of the generateInitialTransactions function
+    }
+
+    vector<unique_ptr<ITransaction>> generateTransactions(unique_ptr<ITransaction> txn, shared_ptr<TransactionResult> result) override {
+        // contents of the generateInitialTransactions function
+    }
+    
+};
+
+```
+
 #### Creating Estimator (Optional)
 #### Creating Multi-Agent Model
 
