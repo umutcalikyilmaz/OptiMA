@@ -186,7 +186,7 @@ class MyEstimator : public OptiMA::Estimator {
 ```
 
 #### Creating Multi-Agent Model
-After the completion of the steps below, the latest step is to create a `OptiMA::MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optinally estimator) are inserted into the model. The user is also expected to set additional parameters related to model execution. Creation and modification of a `OptiMA::MultiAgentModel` object is demonstrated in the following code block.
+After the completion of the steps below, the latest step is to create a `OptiMA::MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optinally estimator) are inserted into the model. The user is also expected to define the constraints of the models and set additional parameters related to model execution. Creation and modification of a `OptiMA::MultiAgentModel` object is demonstrated in the following code block.
 
 ```c++
 
@@ -211,12 +211,31 @@ mam->addAgentTemplate<MyAgentTemplate>(
     startingAgent      // bool: The boolean value showing if the agents of this role will be started at the beginning of the model execution
 );
 
+// Adding supervisor-subordinate relationship
+mam->addSupervisor(
+    supervisorAgentRole,     // int: Id of the supervisor agent role
+    subordinateAgentRole     // int: Id of the subordinate agent role
+);
+
+// Giving authorization for communication (the two agents roles are allowed to communicate with each other)
+mam->addCommunication(
+    agentRole1,        // int: Id of the first agent role
+    agentRole2         // int: Id of the second agent role
+);
+
+// Giving authorization to use a plugin to an agent role
+mam->allowPluginUse(
+    agentRole,        // int: Id of the agent role with the authorization to use the plugin
+    pluginId          // int: Id of the plugin that can be used by the indicated agent role
+);
+
 // Creating an object of a custom transaction factory class and assigning it to the model
-MyTransactionFactory tf()
-mam_->setTransactionFactory(&tf);
+MyTransactionFactory transactionFactory;
+mam->setTransactionFactory(&transactionFactory);
 
 // Creating an object of a custom estimator class and assigning it to the model (optional)
-
+MyEstimator estimator;
+mam->setEstimator(&estimator);
 
 class MyEstimator : public OptiMA::Estimator {
 
