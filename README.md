@@ -186,6 +186,44 @@ class MyEstimator : public OptiMA::Estimator {
 ```
 
 #### Creating Multi-Agent Model
-After the completion of the steps below, the latest step is to create a `OptiMA::MultiAgentModel` class and inserting the user-defined classes into it. 
+After the completion of the steps below, the latest step is to create a `OptiMA::MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optinally estimator) are inserted into the model. The user is also expected to set additional parameters related to model execution. Creation and modification of a `OptiMA::MultiAgentModel` object is demonstrated in the following code block.
+
+```c++
+
+OptiMA::MultiAgentModel mam();
+
+// Adding the custom plugins
+mam->addPlugin<MyPlugin1>(
+    pluginId1,                // int: A unique id that is used for reference the plugin during execution
+    OptiMA::SHAREABLE         // Marks that this transaction is shareable and does not require locking
+);
+
+mam->addPlugin<MyPlugin2>(
+    pluginId2,                // int: A unique id that is used for reference during execution
+    OptiMA::NONSHAREABLE      // Marks that this transaction is nonshareable and require locking
+);
+
+// Adding the custom agent roles
+mam->addAgentTemplate<MyAgentTemplate>(
+    roleId,            // int: A unique id that is used for reference the agent role during execution
+    initialNumber,     // int: The initial number of agents having this role
+    maximumNumber,     // int: The maximum number of agents having this role
+    startingAgent      // bool: The boolean value showing if the agents of this role will be started at the beginning of the model execution
+);
+
+// Creating an object of a custom transaction factory class and assigning it to the model
+MyTransactionFactory tf()
+mam_->setTransactionFactory(&tf);
+
+// Creating an object of a custom estimator class and assigning it to the model (optional)
+
+
+class MyEstimator : public OptiMA::Estimator {
+
+    double estimateLength(const ITransaction& txn) override {
+        // contents of the estimateLength function
+    }   
+};
+```
 
 ### Model Execution
