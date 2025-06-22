@@ -190,21 +190,21 @@ After the completion of the steps below, the latest step is to create a `OptiMA:
 
 ```c++
 
-OptiMA::MultiAgentModel mam();
+OptiMA::MultiAgentModel model();
 
 // Adding the custom plugins
-mam->addPlugin<MyPlugin1>(
+model->addPlugin<MyPlugin1>(
     pluginId1,                // int: A unique id that is used for reference the plugin during execution
     OptiMA::SHAREABLE         // Marks that this transaction is shareable and does not require locking
 );
 
-mam->addPlugin<MyPlugin2>(
+model->addPlugin<MyPlugin2>(
     pluginId2,                // int: A unique id that is used for reference during execution
     OptiMA::NONSHAREABLE      // Marks that this transaction is nonshareable and require locking
 );
 
 // Adding the custom agent roles
-mam->addAgentTemplate<MyAgentTemplate>(
+model->addAgentTemplate<MyAgentTemplate>(
     roleId,            // int: A unique id that is used for reference the agent role during execution
     initialNumber,     // int: The initial number of agents having this role
     maximumNumber,     // int: The maximum number of agents having this role
@@ -212,30 +212,30 @@ mam->addAgentTemplate<MyAgentTemplate>(
 );
 
 // Adding supervisor-subordinate relationship
-mam->addSupervisor(
+model->addSupervisor(
     supervisorAgentRole,     // int: Id of the supervisor agent role
     subordinateAgentRole     // int: Id of the subordinate agent role
 );
 
 // Giving authorization for communication (the two agents roles are allowed to communicate with each other)
-mam->addCommunication(
+model->addCommunication(
     agentRole1,        // int: Id of the first agent role
     agentRole2         // int: Id of the second agent role
 );
 
 // Giving authorization to use a plugin to an agent role
-mam->allowPluginUse(
+model->allowPluginUse(
     agentRole,        // int: Id of the agent role with the authorization to use the plugin
     pluginId          // int: Id of the plugin that can be used by the indicated agent role
 );
 
 // Creating an object of a custom transaction factory class and assigning it to the model
 MyTransactionFactory transactionFactory;
-mam->setTransactionFactory(&transactionFactory);
+model->setTransactionFactory(&transactionFactory);
 
 // Creating an object of a custom estimator class and assigning it to the model (optional)
-MyEstimator estimator;
-mam->setEstimator(&estimator);
+// MyEstimator estimator;
+// model->setEstimator(&estimator);
 
 class MyEstimator : public OptiMA::Estimator {
 
