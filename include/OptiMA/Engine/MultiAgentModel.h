@@ -95,9 +95,9 @@ namespace OptiMA
 
         void allowPluginUse(int agentTemplateId, int pluginId);
 
-        void addEstimator(Estimator* estimator);
+        void setEstimator(Estimator* estimator);
 
-        void addSchedulerSettings(SchedulerSettings* settings);
+        void setSchedulerSettings(SchedulerSettings* settings);
 
         void setTransactionFactory(TransactionFactory* tfactory);
 

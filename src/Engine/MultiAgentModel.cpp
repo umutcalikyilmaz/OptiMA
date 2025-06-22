@@ -64,7 +64,7 @@ namespace OptiMA
         communications_.push_back(make_pair(templateId1, templateId2));
     }
 
-    void MultiAgentModel::addEstimator(Estimator* estimator)
+    void MultiAgentModel::setEstimator(Estimator* estimator)
     {
         if(estimatorAdded_)
         {
@@ -113,7 +113,7 @@ namespace OptiMA
         pluginAccesses_.push_back(make_pair(agentTemplateId, pluginId));
     }
 
-    void MultiAgentModel::addSchedulerSettings(SchedulerSettings* settings)
+    void MultiAgentModel::setSchedulerSettings(SchedulerSettings* settings)
     {
         schSettings_ = settings;
         schedulerSettingsAdded_ = true;

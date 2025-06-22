@@ -258,7 +258,7 @@ public:
                 throw InvalidModelParameterException((char*)"Estimator file is needed for optimized scheduling");
             }
     
-            mam_->addSchedulerSettings(schedulerSettings_);
+            mam_->setSchedulerSettings(schedulerSettings_);
         }
     
         if(keepStats_)
