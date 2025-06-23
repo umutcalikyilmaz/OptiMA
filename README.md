@@ -190,21 +190,21 @@ After the completion of the steps below, the latest step is to create a `OptiMA:
 
 ```c++
 
-OptiMA::MultiAgentModel model();
+OptiMA::MultiAgentModel model;
 
 // Adding the custom plugins
-model->addPlugin<MyPlugin1>(
+model.addPlugin<MyPlugin1>(
     pluginId1,                // int: A unique id that is used for reference the plugin during execution
     OptiMA::SHAREABLE         // Marks that this transaction is shareable and does not require locking
 );
 
-model->addPlugin<MyPlugin2>(
+model.addPlugin<MyPlugin2>(
     pluginId2,                // int: A unique id that is used for reference during execution
     OptiMA::NONSHAREABLE      // Marks that this transaction is nonshareable and require locking
 );
 
 // Adding the custom agent roles
-model->addAgentTemplate<MyAgentTemplate>(
+model.addAgentTemplate<MyAgentTemplate>(
     roleId,            // int: A unique id that is used for reference the agent role during execution
     initialNumber,     // int: The initial number of agents having this role
     maximumNumber,     // int: The maximum number of agents having this role
@@ -212,13 +212,13 @@ model->addAgentTemplate<MyAgentTemplate>(
 );
 
 // Adding supervisor-subordinate relationship
-model->addSupervisor(
+model.addSupervisor(
     supervisorAgentRole,     // int: Id of the supervisor agent role
     subordinateAgentRole     // int: Id of the subordinate agent role
 );
 
 // Giving authorization for communication (the two agents roles are allowed to communicate with each other)
-model->addCommunication(
+model.addCommunication(
     agentRole1,        // int: Id of the first agent role
     agentRole2         // int: Id of the second agent role
 );
@@ -231,21 +231,21 @@ model->allowPluginUse(
 
 // Creating an object of a custom transaction factory class and assigning it to the model
 MyTransactionFactory transactionFactory;
-model->setTransactionFactory(&transactionFactory);
+model.setTransactionFactory(&transactionFactory);
 
 // Creating an object of a custom estimator class and assigning it to the model (optional)
 // MyEstimator estimator;
 // model->setEstimator(&estimator);
 
 // Recording statistics for default estimator (when this option is selected, default estimator cannot be used)
-// mam->keepStatsFile(statsFilePath);
+// model->keepStatsFile(statsFilePath);
 
 // Using default estimator (it uses the stats file created in another run of the model)
-mam->useDefaultEstimator(
+model.useDefaultEstimator(
     statsFilePath    // std::string: Path to the file containing the transaction statistics
 );
 
-mam->setThreadNumber(
+model.setThreadNumber(
     threadNumber        // int: Number of threads to be used in execution
 );
 
@@ -272,6 +272,20 @@ schSettings.SA_MaxTemperature = SA_MaxTemperature;
 
 // TxnSP::TemperatureEvolution: If SASolver is selected for optimization, this setting determines the temperature decrement type (linear, exponential or slow)
 schSettings.SA_DecrementType ) SA_DecrementType;
+
+// double: If SASolver is selected for optimization, this setting determines the decrement parameter
+schSettings.SA_DecrementParameter = SA_DecrementParameter;
+
+// Setting the scheduler settings of the model
+model.setSchedulerSettings(&schSettings);
 ```
 
 ### Model Execution
+After creating and modifying a model, the user can create an `OptiMA::Driver` object and execute the created model. The code below shows how to create a driver, execute a model and get the results of the execution.
+
+```c++
+OptiMA::Driver drv;
+driver.startModel(model);
+std::shared_ptr<OptiMA::Memory> result = drv.getOutputParameters();
+
+```
