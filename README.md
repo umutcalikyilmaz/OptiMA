@@ -237,12 +237,41 @@ model->setTransactionFactory(&transactionFactory);
 // MyEstimator estimator;
 // model->setEstimator(&estimator);
 
-class MyEstimator : public OptiMA::Estimator {
+// Recording statistics for default estimator (when this option is selected, default estimator cannot be used)
+// mam->keepStatsFile(statsFilePath);
 
-    double estimateLength(const ITransaction& txn) override {
-        // contents of the estimateLength function
-    }   
-};
+// Using default estimator (it uses the stats file created in another run of the model)
+mam->useDefaultEstimator(
+    statsFilePath    // std::string: Path to the file containing the transaction statistics
+);
+
+mam->setThreadNumber(
+    threadNumber        // int: Number of threads to be used in execution
+);
+
+// Creating a OptiMA::SchedulerSettings object and inserting it to the model
+OptiMA::SchedulerSettings schSettings;
+
+// bool: Set true to enable schedule optimization during execution
+schSettings.optimized = optimized;
+
+// int: Size of the transaction batch in an optimized execution
+schSettings.batchSize = batchSize;
+
+// bool: Set true to enable thread trigger which starts scheduling when a thread is idle without checking batch size
+schSettings.trigger = trigger;
+
+// TxnSP::SolverType: Type of the optimizer used in an optimized execution
+schSettings.optimizationMethod = optimization method
+
+// TxnSP::SolutionType: If DPSolver is selected for optimization, this setting determines the solution type (exact or approximate)
+schSettings.DP_SolutionType = DP_SolutionType;
+
+// double: If SASolver is selected for optimization, this setting determines the maximum temperature value
+schSettings.SA_MaxTemperature = SA_MaxTemperature;
+
+// TxnSP::TemperatureEvolution: If SASolver is selected for optimization, this setting determines the temperature decrement type (linear, exponential or slow)
+schSettings.SA_DecrementType ) SA_DecrementType;
 ```
 
 ### Model Execution
