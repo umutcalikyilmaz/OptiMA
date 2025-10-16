@@ -15,11 +15,6 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 
 option(ENABLE_MIP "Enable MIP solver support (requires the third-party library SCIP)" OFF)
 
-
-if(ENABLE_MIP)
-  target_compile_definitions(${BINARY_NAME} PUBLIC ENABLE_MIP=1)
-endif()
-
 set(ENABLE_MIP ON CACHE BOOL "Enable MIP solver support (forwarded from OptiMA)" FORCE)
 
 add_subdirectory(TxnSP)
@@ -31,6 +26,10 @@ src/Engine/TransactionFactory.cpp src/Shared/Exceptions.cpp src/Shared/Message.c
 src/TransactionModels/TransactionResult.cpp)
 
 set_property(TARGET ${BINARY_NAME} PROPERTY CXX_STANDARD 20)
+
+if(ENABLE_MIP)
+  target_compile_definitions(${BINARY_NAME} PUBLIC ENABLE_MIP=1)
+endif()
 
 target_include_directories(${BINARY_NAME}
   PUBLIC
