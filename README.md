@@ -194,13 +194,13 @@ OptiMA::MultiAgentModel model;
 
 // Adding the custom plugins
 model.addPlugin<MyPlugin1>(
-    pluginId1,                // int: A unique id that is used for reference the plugin during execution
-    OptiMA::SHAREABLE         // Marks that this transaction is shareable and does not require locking
+    pluginId1,                       // int: A unique id that is used for reference the plugin during execution
+    OptiMA::PluginType::SHAREABLE    // Marks that this transaction is shareable and does not require locking
 );
 
 model.addPlugin<MyPlugin2>(
-    pluginId2,                // int: A unique id that is used for reference during execution
-    OptiMA::NONSHAREABLE      // Marks that this transaction is nonshareable and require locking
+    pluginId2,                            // int: A unique id that is used for reference during execution
+    OptiMA::PluginType::NONSHAREABLE      // Marks that this transaction is nonshareable and require locking
 );
 
 // Adding the custom agent roles
