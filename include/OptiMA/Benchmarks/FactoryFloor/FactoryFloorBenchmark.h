@@ -97,17 +97,13 @@ public:
         weldingCoef_ = weldingCoefficient;
     }
 
-    void setManualOperationCoefficients(vector<double>& coefficients)
+    void setManualOperationCoefficients(double coefficient1, double coefficient2, double coefficient3, double coefficient4, double coefficient5)
     {
-        if(coefficients.size() != 5)
-        {
-            throw InvalidModelParameterException((char*)"Number of coefficients must be equal to 5");
-        }
-    
-        for(int i = 0; i < 5; i++)
-        {
-            manualOperationCoefs_[i] = coefficients[i];
-        }
+        manualOperationCoefs_[0] = coefficient1;
+        manualOperationCoefs_[1] = coefficient2;
+        manualOperationCoefs_[2] = coefficient3;
+        manualOperationCoefs_[3] = coefficient4;
+        manualOperationCoefs_[4] = coefficient5;
     }
 
     void saveJobs(string filePath)
@@ -272,13 +268,13 @@ public:
         mam_->addAgentTemplate<Transporter>(1, initialTransporterNumber_, maximumTransporter, true);
         mam_->addAgentTemplate<Inspector>(2, initialInspectorNumber_, maximumInspector, true);        
     
-        mam_->addPlugin<AssemblyQueue>(0, SHAREABLE);
-        mam_->addPlugin<ConveyorBelt>(1, SHAREABLE);
-        mam_->addPlugin<DrillPress>(2, NONSHAREABLE);
-        mam_->addPlugin<InspectionQueue>(3, SHAREABLE);
-        mam_->addPlugin<QAScanner>(4, NONSHAREABLE);
-        mam_->addPlugin<WeldingStation>(5, NONSHAREABLE);
-        mam_->addPlugin<OutputBin>(6, SHAREABLE);
+        mam_->addPlugin<AssemblyQueue>(0, PluginType::SHAREABLE);
+        mam_->addPlugin<ConveyorBelt>(1, PluginType::SHAREABLE);
+        mam_->addPlugin<DrillPress>(2, PluginType::NONSHAREABLE);
+        mam_->addPlugin<InspectionQueue>(3, PluginType::SHAREABLE);
+        mam_->addPlugin<QAScanner>(4, PluginType::NONSHAREABLE);
+        mam_->addPlugin<WeldingStation>(5, PluginType::NONSHAREABLE);
+        mam_->addPlugin<OutputBin>(6, PluginType::SHAREABLE);
            
         mam_->addSupervisor(3, 0);        
         mam_->addSupervisor(3, 1);

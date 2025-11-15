@@ -60,8 +60,7 @@ namespace OptiMA
         txn->setAgentManager(amanager_);
         txn->setPostMaster(postmaster_);
         txn->findNonShareable(pmanager_);
-        //txn->clear();
-
+        
         if(optimized_)
         {
             txn->setLength(estimator_->estimateLength(*txn));

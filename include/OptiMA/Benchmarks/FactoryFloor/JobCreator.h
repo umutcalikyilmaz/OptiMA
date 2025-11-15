@@ -221,17 +221,6 @@ public:
             }
         } 
         
-        /*
-        vector<unique_ptr<Job>> asdad;
-
-        int cb = res->size();
-
-        for(int i = 0; i < cb; i++)
-        {
-            asdad.push_back(move((*res)[i]));
-        }
-            */
-
         return res;
     }
 };

@@ -12,10 +12,10 @@ namespace OptiMA
             instances_[id] = factories[c]->createPluginInstance();
             instances_[id]->pluginId_ = id;
             types_[id] = pluginTypes[c];
-            statuses_[id] = FREE;
+            statuses_[id] = PluginStatus::FREE;
             allowedAgentTypes_[id] = vector<int>();
 
-            if(pluginTypes[c] == NONSHAREABLE)
+            if(pluginTypes[c] == PluginType::NONSHAREABLE)
             {
                 nonShareable_.insert(id);
             }
@@ -48,14 +48,14 @@ namespace OptiMA
             throw UnautorizedAccessException("This type of agent is not allowed to seize this plugin");
         }
 
-        if(types_[pluginId] == NONSHAREABLE)
+        if(types_[pluginId] == PluginType::NONSHAREABLE)
         {
-            if(statuses_[pluginId] == SEIZED)
+            if(statuses_[pluginId] == PluginStatus::SEIZED)
             {
                 throw UnautorizedAccessException("This plugin is seized by another transaction");
             }            
             
-            statuses_[pluginId] = SEIZED;
+            statuses_[pluginId] = PluginStatus::SEIZED;
             return instances_[pluginId];
         }
 
@@ -65,7 +65,7 @@ namespace OptiMA
     void PluginManager::releasePlugin(PluginInstance* instance)
     {
         lock_guard<mutex> lock(pluginLock_);
-        statuses_[instance->pluginId_] = FREE;
+        statuses_[instance->pluginId_] = PluginStatus::FREE;
     }
 
     const set<int> PluginManager::getNonShareable(const set<int>& plugins)
@@ -74,7 +74,7 @@ namespace OptiMA
 
         for(int p : plugins)
         {
-            if(types_[p] == NONSHAREABLE)
+            if(types_[p] == PluginType::NONSHAREABLE)
             {
                 res.insert(p);
             }

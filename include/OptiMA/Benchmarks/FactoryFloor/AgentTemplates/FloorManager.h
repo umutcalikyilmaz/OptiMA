@@ -45,33 +45,7 @@ public:
         lastActive_ = chrono::steady_clock::now().time_since_epoch().count();
         return nullptr;
     }
-/*
-    shared_ptr<Memory> checkCompleted()
-    {
-        queue<shared_ptr<Message>> msgs = checkMessages();
-        bool completed = false;
 
-        while(!msgs.empty())
-        {
-            auto msg = msgs.front();
-            msgs.pop();
-
-            if(msg->getSenderType() == 2)
-            {                
-                if(++completedJobNum_ == totalJobNum_)
-                {
-                    completed = true;
-                }
-
-                //cout << "Transaction " << to_string(completedJobNum_) << " is completed.\n";
-            }
-        }
-
-        shared_ptr<Memory> res = generateMemory();
-        res->addTuple(completed);
-        return res;
-    }
-*/
     shared_ptr<Memory> manageConveyorBelt()
     {
         shared_ptr<Memory> input = generateMemory();
@@ -90,7 +64,7 @@ public:
             {
                 tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                if(get<2>(record) == IDLE)
+                if(get<2>(record) == AgentStatus::IDLE)
                 {
                     targetId_ = get<0>(record);
                     startAgent(targetId_);
@@ -115,7 +89,7 @@ public:
                     {
                         tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                        if(get<2>(record) == ACTIVE || get<2>(record) == ASSIGNED)
+                        if(get<2>(record) == AgentStatus::ACTIVE || get<2>(record) == AgentStatus::ASSIGNED)
                         {
                             targetId_ = get<0>(record);
 
@@ -144,7 +118,7 @@ public:
             {
                 tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                if(get<2>(record) == IDLE)
+                if(get<2>(record) == AgentStatus::IDLE)
                 {
                     targetId_ = get<0>(record);
                     startAgent(targetId_);
@@ -169,7 +143,7 @@ public:
                     {
                         tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                        if(get<2>(record) == ACTIVE || get<2>(record) == ASSIGNED)
+                        if(get<2>(record) == AgentStatus::ACTIVE || get<2>(record) == AgentStatus::ASSIGNED)
                         {
                             targetId_ = get<0>(record);
 
@@ -209,7 +183,7 @@ public:
             {
                 tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                if(get<2>(record) == IDLE)
+                if(get<2>(record) == AgentStatus::IDLE)
                 {
                     targetId_ = get<0>(record);
                     startAgent(targetId_);
@@ -234,7 +208,7 @@ public:
                     {
                         tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                        if(get<2>(record) == ACTIVE || get<2>(record) == ASSIGNED)
+                        if(get<2>(record) == AgentStatus::ACTIVE || get<2>(record) == AgentStatus::ASSIGNED)
                         {
                             targetId_ = get<0>(record);
 
@@ -263,7 +237,7 @@ public:
             {
                 tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                if(get<2>(record) == IDLE)
+                if(get<2>(record) == AgentStatus::IDLE)
                 {
                     targetId_ = get<0>(record);
                     startAgent(targetId_);
@@ -288,7 +262,7 @@ public:
                     {
                         tuple<int, int, AgentStatus, long, long>& record = operationResult->getTuple<int, int, AgentStatus, long, long>(i);
 
-                        if(get<2>(record) == ACTIVE || get<2>(record) == ASSIGNED)
+                        if(get<2>(record) == AgentStatus::ACTIVE || get<2>(record) == AgentStatus::ASSIGNED)
                         {
                             targetId_ = get<0>(record);
 

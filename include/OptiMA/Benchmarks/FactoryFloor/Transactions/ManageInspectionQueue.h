@@ -4,8 +4,6 @@
 
 class ManageInspectionQueue : public Transaction
 {
-private:
-    /* data */
 public:
 
     ManageInspectionQueue(Agent* agent) : Transaction({agent}, 11, 0, {3}) { }

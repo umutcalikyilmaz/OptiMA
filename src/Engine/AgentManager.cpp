@@ -94,7 +94,7 @@ namespace OptiMA
             AgentInfo* ai = new AgentInfo();
             ai->agentId = p.first;
             ai->agentType = p.second.second;
-            ai->status = IDLE;
+            ai->status = AgentStatus::IDLE;
             ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime;
             ai->lastStatusChange = ai->creationTime;
             agentInfos_[p.first] = ai;
@@ -107,9 +107,9 @@ namespace OptiMA
 
         for(int id : agentIds_.at(agentType))
         {
-            if(agentInfos_.at(id)->status == ACTIVE)
+            if(agentInfos_.at(id)->status == AgentStatus::ACTIVE)
             {
-                agentInfos_.at(id)->status = ASSIGNED;
+                agentInfos_.at(id)->status = AgentStatus::ASSIGNED;
                 Agent* res = agentMap_.at(id).first;
                 res->setCurrentTransaction(transactionId);
                 return res;
@@ -118,28 +118,11 @@ namespace OptiMA
 
         throw AgentUnavailableException("No available agent of the given type exists");
     }
-    /*
-    void AgentManager::assignAgentById(long transactionId, int agentId)
-    {
-        lock_guard<mutex> lock(agentLock_);
-
-        if(agentInfos_.at(agentId)->status == ACTIVE)
-        {
-            agentInfos_.at(agentId)->status = ASSIGNED;
-            Agent* res = agentMap_.at(agentId).first;
-            res->setCurrentTransaction(transactionId);
-        }
-        else
-        {
-            throw AgentUnavailableException("The requested agent is not available");
-        }
-    }
-    */
 
     void AgentManager::releaseAgent(int agentId)
     {
         lock_guard<mutex> lock(agentLock_);
-        agentInfos_.at(agentId)->status = ACTIVE;
+        agentInfos_.at(agentId)->status = AgentStatus::ACTIVE;
         agentMap_.at(agentId).first->setCurrentTransaction(-1);
     }
 
@@ -163,7 +146,7 @@ namespace OptiMA
             throw AgentLimitException("Maximum number of agents for this agent type is exceeded.");
         }
 
-        enterLog(transactionId, CREATE, targetType);
+        enterLog(transactionId, AgentOperationType::CREATE, targetType);
     }
 
     void AgentManager::requestCreateAndStartAgent(long transactionId, int senderId, int senderType, int targetType)
@@ -180,7 +163,7 @@ namespace OptiMA
             throw AgentLimitException("Maximum number of agents for this agent type is exceeded.");
         }
 
-        enterLog(transactionId, CREATEANDSTART, targetType);
+        enterLog(transactionId, AgentOperationType::CREATEANDSTART, targetType);
     }
 
     void AgentManager::requestStartAgent(long transactionId, int senderId, int senderType, int targetId)
@@ -193,7 +176,7 @@ namespace OptiMA
             throw UnautorizedAccessException("The sender is not autorized to start this type of agent");
         }
 
-        enterLog(transactionId, START, targetId);
+        enterLog(transactionId, AgentOperationType::START, targetId);
     }
 
     void AgentManager::requestStopAgent(long transactionId, int senderId, int senderType, int targetId)
@@ -208,13 +191,13 @@ namespace OptiMA
                 throw UnautorizedAccessException("The sender is not autorized to stop this type of agent");
             }
 
-            if(agentInfos_[targetId]->status == ASSIGNED)
+            if(agentInfos_[targetId]->status == AgentStatus::ASSIGNED)
             {
                 throw UnautorizedAccessException("The agent cannot be stopped because it is assigned to a transaction");
             }
         }        
 
-        enterLog(transactionId, START, targetId);
+        enterLog(transactionId, AgentOperationType::START, targetId);
     }
 
     void AgentManager::requestDestroyAgent(long transactionId, int senderId, int senderType, int targetId)
@@ -227,12 +210,12 @@ namespace OptiMA
             throw UnautorizedAccessException("The sender is not autorized to destroy this type of agent");
         }
 
-        if(agentMap_.at(targetId).first->getStatus() != IDLE)
+        if(agentMap_.at(targetId).first->getStatus() != AgentStatus::IDLE)
         {
             throw UnautorizedAccessException("The agent cannot be destroyed because it is not idle.");
         }
 
-        enterLog(transactionId, DESTROY, targetId);
+        enterLog(transactionId, AgentOperationType::DESTROY, targetId);
     }
 
     void AgentManager::createAgent(int targetType)
@@ -244,7 +227,7 @@ namespace OptiMA
         AgentInfo* ai = new AgentInfo();
         ai->agentId = agentCount_;
         ai->agentType = targetType;
-        ai->status = IDLE;
+        ai->status = AgentStatus::IDLE;
         ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
         ai->lastStatusChange = ai->creationTime;
 
@@ -264,7 +247,7 @@ namespace OptiMA
         AgentInfo* ai = new AgentInfo();
         ai->agentId = agentCount_;
         ai->agentType = targetType;
-        ai->status = IDLE;
+        ai->status = AgentStatus::IDLE;
         ai->creationTime = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
         ai->lastStatusChange = ai->creationTime;
 
@@ -282,7 +265,7 @@ namespace OptiMA
         lock_guard<mutex> lock(agentLock_);
 
         agentMap_.at(targetId).first->start();
-        agentInfos_.at(targetId)->status = ACTIVE;
+        agentInfos_.at(targetId)->status = AgentStatus::ACTIVE;
         agentInfos_.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
     }
 
@@ -291,7 +274,7 @@ namespace OptiMA
         lock_guard<mutex> lock(agentLock_);
         
         agentMap_.at(targetId).first->stop();
-        agentInfos_.at(targetId)->status = IDLE;
+        agentInfos_.at(targetId)->status = AgentStatus::IDLE;
         agentInfos_.at(targetId)->lastStatusChange = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;        
     }
 
@@ -364,23 +347,23 @@ namespace OptiMA
             {
                 switch (p.first)
                 {
-                case CREATE:
+                case AgentOperationType::CREATE:
                     createAgent(p.second);
                     break;
 
-                case CREATEANDSTART:
+                case AgentOperationType::CREATEANDSTART:
                     createAndStartAgent(p.second);
                     break;
 
-                case DESTROY:
+                case AgentOperationType::DESTROY:
                     destroyAgent(p.second);
                     break;
                 
-                case START:
+                case AgentOperationType::START:
                     startAgent(p.second);
                     break;
 
-                case STOP:
+                case AgentOperationType::STOP:
                     stopAgent(p.second);
                     break;
                 default:
@@ -404,7 +387,7 @@ namespace OptiMA
             for(int id : agentIds_.at(type))
             {
                 agentMap_.at(id).first->start();
-                agentInfos_.at(id)->status = ACTIVE;
+                agentInfos_.at(id)->status = AgentStatus::ACTIVE;
             }
         }
     }

@@ -14,8 +14,6 @@ namespace OptiMA
 
         Agent* seizeAgent(long transactionId, int agentType);
 
-        //void assignAgentById(long transactionId, int agentId);
-
         void releaseAgent(int agentId);
 
         void transferOwnership(int transactionId, int agentId);

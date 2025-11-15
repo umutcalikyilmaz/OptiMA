@@ -6,12 +6,6 @@ namespace OptiMA
     class IAgentManager
     {
     public:
-
-        //virtual Agent* assignAgentByType(long transactionId, int agentType) = 0;
-
-        //virtual Agent* assignAgentById(long transactionId, int agentId) = 0;
-
-        //virtual void releaseAgent(int agentId) = 0;
         
         virtual void requestCreateAgent(long transactionId, int senderId, int senderType, int targetType) = 0;
 

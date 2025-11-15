@@ -33,8 +33,6 @@ namespace OptiMA
 
         virtual const set<int>& getNonShareblePlugins() const = 0;
 
-        //virtual void clear() = 0;
-
         virtual void findNonShareable(PluginManager* pmanager) = 0;
 
         virtual ~ITransaction() = default;

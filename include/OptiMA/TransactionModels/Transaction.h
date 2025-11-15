@@ -117,17 +117,17 @@ namespace OptiMA
                 catch(UserAbortException e)
                 {
                     rollback();
-                    return make_shared<TransactionResult>(ABORTED, e.what());
+                    return make_shared<TransactionResult>(TransactionStatus::ABORTED, e.what());
                 }
             }
             catch(exception& e)
             {
                 rollback();
-                return make_shared<TransactionResult>(FAILED, e.what());
+                return make_shared<TransactionResult>(TransactionStatus::FAILED, e.what());
             }        
             
             commit();
-            return make_shared<TransactionResult>(SUCCESSFUL, output);
+            return make_shared<TransactionResult>(TransactionStatus::SUCCESSFUL, output);
         }
 
         void commit()
@@ -197,12 +197,6 @@ namespace OptiMA
         {
             return subType_;
         }
-        /*
-        void clear() override
-        {
-            Agents_.clear();
-        }
-            */
 
         void findNonShareable(PluginManager* pmanager) override
         {

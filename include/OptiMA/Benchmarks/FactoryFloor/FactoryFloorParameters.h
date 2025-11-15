@@ -1,5 +1,6 @@
 #pragma once
 #include "OptiMA/Shared/Types.h"
+#include "OptiMA/Benchmarks/FactoryFloor/Job.h"
 
 const static double assemblyManualOperationMeans[5] {700, 1200, 2100, 3000, 4300};
 const static double assemblyManualOperationStds[5] {65, 100, 150, 250, 250};

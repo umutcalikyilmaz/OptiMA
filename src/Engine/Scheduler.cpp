@@ -2,7 +2,7 @@
 
 namespace OptiMA
 {
-    void Reorder(int* list, int size, int ind)
+    void reorder(int* list, int size, int ind)
     {
         for(int i = size; i > ind; i--)
         {
@@ -88,22 +88,22 @@ namespace OptiMA
 		return ll;
 	}
 
-    void OrderAscending(int* list, double* vlist, int m)
+    void orderAscending(int* list, double* vlist, int m)
     {
         for(int i = 0; i < m; i++)
         {
             int ind = findPlace(vlist, list, vlist[i], i);
-            Reorder(list, i, ind);
+            reorder(list, i, ind);
             list[ind] = i;
         }
     }
 
-    void OrderDescending(int* list, vector<double> vlist, int m)
+    void orderDescending(int* list, vector<double> vlist, int m)
     {
         for(int i = 0; i < m; i++)
         {
             int ind = findPlace2(vlist, list, vlist[i], i);
-            Reorder(list, i, ind);
+            reorder(list, i, ind);
             list[ind] = i;
         }
     }
@@ -176,22 +176,22 @@ namespace OptiMA
 
         switch (settings->optimizationMethod)
         {
-        case TxnSP::DP :
+        case TxnSP::SolverType::DP :
             slv_ = new TxnSP::DPSolver();
             sinp_.DP_SolutionType = settings->DP_SolutionType;
             break;
 
-        case TxnSP::ES :
+        case TxnSP::SolverType::ES :
             slv_ = new TxnSP::ESSolver();
             break;
 
         #ifdef ENABLE_MIP
-        case TxnSP::MIP :
+        case TxnSP::SolverType::MIP :
             slv_ = new TxnSP::MIPSolver();
             break;
         #endif
 
-        case TxnSP::SA :
+        case TxnSP::SolverType::SA :
             slv_ = new TxnSP::SASolver();
             sinp_.SA_DecrementParameter = settings->SA_DecrementParameter;
             sinp_.SA_DecrementType = settings->SA_DecrementType;
@@ -255,12 +255,10 @@ namespace OptiMA
             TxnSP::SolverOutput* out;
             optimize(out);
 
-            OrderDescending(norder_, out->processingTimes, threadNum_);
+            orderDescending(norder_, out->processingTimes, threadNum_);
                 
             for(int i = 0; i < threadNum_; i++)
             {
-                vector<ITransaction*> transactionList;
-
                 for(int job : out->jobs[norder_[i]])
                 {
                     executor_->assignTransaction(move(txns_[job]), order_[i]);
@@ -269,7 +267,7 @@ namespace OptiMA
                 total_[order_[i]] += out->processingTimes[norder_[i]];
             }
                 
-            OrderAscending(order_, total_, threadNum_);
+            orderAscending(order_, total_, threadNum_);
             delete out;
             txns_.clear();
         }

@@ -13,7 +13,7 @@ using namespace std;
 
 namespace OptiMA
 {
-    enum AgentOperationType
+    enum class AgentOperationType : uint8_t
     {
         CREATE,
         CREATEANDSTART,
@@ -22,14 +22,14 @@ namespace OptiMA
         STOP
     };
 
-    enum AgentStatus
+    enum class AgentStatus : uint8_t
     {
         ACTIVE,
         ASSIGNED,
         IDLE
     };
 
-    enum ParameterType
+    enum class ParameterType : uint8_t
     {
         AGENTSTATUS,
         BOOL,
@@ -41,26 +41,26 @@ namespace OptiMA
         STRING        
     };
 
-    enum PluginStatus
+    enum class PluginStatus : uint8_t
     {
         FREE,
         SEIZED
     };
 
-    enum PluginType
+    enum class PluginType : uint8_t
     {
         SHAREABLE,
         NONSHAREABLE
     };
 
-    enum TransactionStatus
+    enum class TransactionStatus : uint8_t
     {
         ABORTED,
         FAILED,
         SUCCESSFUL
     };
 
-    enum TransactionType
+    enum class TransactionType : uint8_t
     {
         BEGIN,
         COMMUNICATE,

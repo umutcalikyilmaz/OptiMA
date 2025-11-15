@@ -4,8 +4,6 @@
 
 class ManageConveyorBelt : public Transaction
 {
-private:
-    /* data */
 public:
     ManageConveyorBelt(Agent* agent) : Transaction({agent}, 10, 0, {1}) { }
     

@@ -181,7 +181,6 @@ namespace TxnSP
         int* coreCount = new int[machineNumber];
 		int* tempLast = new int[machineNumber];
         int* coreNums = sch->getJobNumbers();
-        //double* ccoreTimes = sch->getProcessingTimes();
         int** schjobs = sch->getJobs();
         bool** conf = prb->getConflicts();
 		double* T = prb->getLengths();

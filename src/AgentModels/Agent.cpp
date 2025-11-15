@@ -6,7 +6,7 @@ namespace OptiMA
 
     void Agent::start()
     {
-        status_ = ACTIVE;
+        status_ = AgentStatus::ACTIVE;
         started_ = true;
     }
 
