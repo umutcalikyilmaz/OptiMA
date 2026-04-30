@@ -49,19 +49,13 @@ namespace OptiMA
         while(state->started)
         {
             unique_ptr<ITransaction> txn = state->txnQueue->pull();
-
-            if(trigger_ && state->txnQueue->isEmpty())
-            {
-                listener_->trigger();
-            }
-
             executeTransaction(move(txn), state);            
         }
     }
 
     Executor::Executor(IDriver* driver, TransactionFactory* tfactory, PluginManager* pmanager, int threadNum,
-    const set<int>& nonshareablePlugins, bool optimized, bool trigger, bool keepStats) : driver_(driver), tfactory_(tfactory),
-    pmanager_(pmanager), lock_(false), threadNum_(threadNum), optimized_(optimized), trigger_(trigger), keepStats_(keepStats)
+    const set<int>& nonshareablePlugins, bool optimized, bool keepStats) : driver_(driver), tfactory_(tfactory),
+    pmanager_(pmanager), lock_(false), threadNum_(threadNum), optimized_(optimized), keepStats_(keepStats)
     {
         states_ = new ExecutorState*[threadNum];
         threads_ = new thread[threadNum];

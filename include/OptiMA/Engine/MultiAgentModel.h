@@ -29,15 +29,15 @@ namespace OptiMA
         vector<int> initialAgents_;
         string keepStatsFilePath_;
         string defaultEstimatorFilePath_;
+        chrono::milliseconds timeout_ = 1ms;
         int agentTemplateNumber_;
         int pluginNumber_;
         int totalMaxNumber_;
         int threadNumber_;
-        int batchSize_;
+        int batchSize_ = 1;
         bool schedulerSettingsAdded_;
         bool estimatorAdded_;
         bool numCheck_;
-        bool trigger_;
         bool initialAgentsAdded_;
         bool keepStats_;
         bool defaultEstimator_;
@@ -105,7 +105,7 @@ namespace OptiMA
 
         void setBatchSize(int batchSize);
 
-        void setTrigger();
+        void setTimeout(chrono::milliseconds timeout);
 
         void keepStatsFile(string statsFilePath);
 

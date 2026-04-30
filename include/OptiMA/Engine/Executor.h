@@ -13,7 +13,7 @@ namespace OptiMA
     public:
 
         Executor(IDriver* driver, TransactionFactory* tfactory, PluginManager* pmanager, int threadNum, const set<int>& nonshareablePlugins,
-        bool optimized, bool trigger, bool keepStats);
+        bool optimized, bool keepStats);
 
         void insertTransactionQueue(TransactionQueue* txnQueue);
 
@@ -45,7 +45,6 @@ namespace OptiMA
         atomic_bool lock_;
         bool optimized_;
         bool keepStats_;
-        bool trigger_;
 
         void lockPlugins(const set<int>& plugins);
 

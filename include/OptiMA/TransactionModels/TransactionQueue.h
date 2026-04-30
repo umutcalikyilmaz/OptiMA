@@ -13,6 +13,8 @@ namespace OptiMA
 
         TransactionQueue();
 
+        TransactionQueue(int batchSize, chrono::milliseconds timeout);
+
         void silentPush(unique_ptr<ITransaction> txn);
 
         void push(unique_ptr<ITransaction> txn);
@@ -32,7 +34,10 @@ namespace OptiMA
         queue<unique_ptr<ITransaction>> txnQueue_;
         mutex queueLock_;
         condition_variable cv_;
+        const int batchSize_;
+        const chrono::milliseconds timeout_;
         atomic_bool triggered_;
         atomic_bool exit_;
+        bool initial_ = true;
     };
 }

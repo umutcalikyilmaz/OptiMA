@@ -29,11 +29,14 @@ private:
     string jobFilePath_;
     string estimatorFilePath_;
     string statsFilePath_;
+    chrono::milliseconds timeout_;
     mutex timerLock_;
     condition_variable wakingCondition_;
     double manualOperationCoef_;
     double drillingCoef_;
     double weldingCoef_;
+    double beg_;
+    double end_;
     int minimumTransactionNumber_;
     int maximumTransactionNumber_;
     int minimumOperationNumber_;
@@ -44,24 +47,25 @@ private:
     int threadNumber_;
     int timeStep_;
     int batchSize_;
-    atomic_bool completed_;
-    atomic_bool interrupted_;
+    int begCount_;
+    int begCount2_;
+    int endCount_;
+    int endCount2_;
     bool useExisting_;
     bool saveJobs_;
     bool schedulerInitialized_;
     bool estimatorFileSet_;
-    bool trigger_;
     bool batchSizeSet_;
+    bool timeoutSet_;
     bool threadNumSet_;
-    bool keepStats_;
-    
+    bool keepStats_;    
 
 public:
 
     FactoryFloorBenchmark(): manualOperationCoef_(1), drillingCoef_(1), weldingCoef_(1), manualOperationCoefs_({1, 1, 1, 1, 1}),
     drillingOperationCoefs_({1, 1}), weldingOperationCoefs_({1, 1}), minimumTransactionNumber_(1), maximumTransactionNumber_(4),
     minimumOperationNumber_(1), maximumOperationNumber_(2), saveJobs_(false), useExisting_(false), schedulerInitialized_(false),
-    estimatorFileSet_(false), threadNumSet_(false), trigger_(false), batchSizeSet_(false), keepStats_(false)
+    estimatorFileSet_(false), threadNumSet_(false), batchSizeSet_(false), timeoutSet_(false), keepStats_(false)
     {
         simulationTimeScale = 1;
         totalJobNumber = 100;
@@ -157,20 +161,16 @@ public:
         threadNumSet_ = true;
     }
 
-    void setTrigger()
-    {
-        trigger_ = true;
-    }
-
-    void disableTrigger()
-    {
-        trigger_ = false;
-    }
-
     void setBatchSize(int batchSize)
     {
         batchSize_ = batchSize;
         batchSizeSet_ = true;
+    }
+
+    void setTimeout(chrono::milliseconds timeout)
+    {
+        timeout_ = timeout;
+        timeoutSet_ = true;
     }
 
     void keepStats(string filePath)
@@ -187,16 +187,29 @@ public:
 
     void keepTime(chrono::milliseconds duration)
     {
+        {
+            unique_lock<mutex> lock(timerLock_);
+            warmupCondition.wait(lock, [this]
+            {
+                return warmedUp.load();
+            });
+    
+            beg_ = chrono::steady_clock::now().time_since_epoch().count();
+            begCount_ = started;
+            begCount2_ = completed;
+        }
+        
+
         unique_lock<mutex> lock(timerLock_);
-        interrupted_ = !wakingCondition_.wait_for(lock, duration, [this]
-        { 
-            return completed_.load(); 
+        cooldownCondition.wait(lock, [this]
+        {
+            return cooledDown.load();
         });
 
-        if(interrupted_)
-        {
-            drv_->haltProgram(nullptr);
-        }        
+        end_ = chrono::steady_clock::now().time_since_epoch().count();
+        endCount_ = started;
+        endCount2_ = completed;
+        drv_->haltProgram(nullptr);
     }
 
     double StartBenchmark()
@@ -204,6 +217,12 @@ public:
         JobCreator* jc;
         mam_ = new MultiAgentModel();
         drv_ = new Driver();
+        warmedUp = false;
+        cooledDown = false;
+        begCount_ = 0;
+        endCount_ = 0;
+        completed = 0;
+        started = 0;
     
         if(useExisting_)
         {
@@ -237,15 +256,10 @@ public:
             throw InvalidModelParameterException((char*)"Thread number is not set");
         }
     
-        if(trigger_)
-        {
-            mam_->setTrigger();
-        }
-    
         if(batchSizeSet_)
         {
             mam_->setBatchSize(batchSize_);
-        }
+        }        
     
         if(schedulerInitialized_)
         {
@@ -253,8 +267,19 @@ public:
             {
                 throw InvalidModelParameterException((char*)"Estimator file is needed for optimized scheduling");
             }
+
+            if(schedulerSettings_->optimized && (!timeoutSet_ || !batchSizeSet_))
+            {
+                throw InvalidModelParameterException((char*)"Batch size and timeout must be set for optimized execution");
+            }
     
             mam_->setSchedulerSettings(schedulerSettings_);
+        }
+        
+        if(schedulerSettings_->optimized)
+        {
+            mam_->setBatchSize(batchSize_);
+            mam_->setTimeout(timeout_);
         }
     
         if(keepStats_)
@@ -302,29 +327,16 @@ public:
         FactoryFloorTransactionFactory tf(initialAssemblyWorkerNumber_, initialTransporterNumber_, initialInspectorNumber_);
         mam_->setTransactionFactory(&tf);
         
-        completed_ = false;
-        interrupted_ = false;
-        
         double beg = chrono::steady_clock::now().time_since_epoch().count();
-        thread timerThread(&FactoryFloorBenchmark::keepTime, this, chrono::milliseconds((int)(15000 * simulationTimeScale * totalJobNumber)));        
+        thread timerThread(&FactoryFloorBenchmark::keepTime, this, chrono::milliseconds((int)(15000 * simulationTimeScale * totalJobNumber)));
         drv_->startModel(*mam_);        
         double end = chrono::steady_clock::now().time_since_epoch().count();
 
-        completed_ = true;
         wakingCondition_.notify_one();
         timerThread.join();
 
         delete mam_;
         delete drv_;
-
-        if(interrupted_)
-        {
-            return -1;
-        }
-        else
-        {
-            return (end - beg) / 1000000000;
-        }
-        
+        return (double)(endCount2_ - begCount_) / ((end_ - beg_) / 1000000000);      
     }
 };

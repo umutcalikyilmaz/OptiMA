@@ -13,10 +13,8 @@ namespace OptiMA
 
         Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster);
 
-        Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator, IScheduler* scheduler, bool trigger);
-
-        Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator, IScheduler* scheduler, bool trigger,
-        int batchSize);
+        Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator, IScheduler* scheduler,
+        int batchSize, chrono::milliseconds timeout);
 
         void sendTransaction(unique_ptr<ITransaction> txn) override;
 
@@ -37,6 +35,7 @@ namespace OptiMA
         TransactionQueue* txnQueue_;
         mutex timerLock_;
         mutex triggerLock_;
+        mutex queueLock_;
         condition_variable deleteCondition_;
         condition_variable triggerCondition_;
         long transactionCount_;

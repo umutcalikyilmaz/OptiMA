@@ -24,12 +24,15 @@ public:
     
             if(jobQueue_.empty())
             {
+                cooledDown = true;
+                cooldownCondition.notify_one();
                 return nullptr;
             }
         
             auto res = make_shared<Memory>();
             res->addTuple(move(jobQueue_.front()));
             jobQueue_.pop();
+            started++;
             return res;
         }    
         else

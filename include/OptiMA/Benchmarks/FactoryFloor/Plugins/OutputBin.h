@@ -25,6 +25,9 @@ public:
         
         shared_ptr<Memory> res = generateMemory();
         res->addTuple(completedJobs_.size() == totalJobNum_);
+        completed++;
+        warmedUp = true;
+        warmupCondition.notify_one();
         return res;
     }
 };

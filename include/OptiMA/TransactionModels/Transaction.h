@@ -201,7 +201,6 @@ namespace OptiMA
         void findNonShareable(PluginManager* pmanager) override
         {
             nonShareablePlugins_ = pmanager->getNonShareable(requestedPlugins_);
-            int asd = 0;
         }
 
         virtual ~Transaction() = default;

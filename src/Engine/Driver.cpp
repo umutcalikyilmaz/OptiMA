@@ -20,7 +20,6 @@ namespace OptiMA
         {
             settingsCreated_ = false;
             schSettings_ = model.schSettings_;
-            trigger_ = model.trigger_;
         }
         else
         {
@@ -53,7 +52,7 @@ namespace OptiMA
         
         set<int> nonShareablePlugins = pmanager_->getNonShareable();
         
-        executor_ = new Executor(this, tfactory_, pmanager_, model.threadNumber_, nonShareablePlugins, schSettings_->optimized,trigger_,
+        executor_ = new Executor(this, tfactory_, pmanager_, model.threadNumber_, nonShareablePlugins, schSettings_->optimized,
         keepStats_);
 
         if(model.defaultEstimator_)
@@ -67,14 +66,7 @@ namespace OptiMA
 
         if(schSettings_->optimized)
         {
-            if(model.numCheck_)
-            {
-                listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, trigger_, model.batchSize_);
-            }
-            else
-            {
-                listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, trigger_);
-            }
+            listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, model.batchSize_, model.timeout_);
 
             listenerQueue_ = listener_->getTransactionQueue();
             scheduler_ = new Scheduler(schSettings_, executor_, nonShareablePlugins, model.threadNumber_);

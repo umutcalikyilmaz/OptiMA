@@ -84,13 +84,20 @@ private:
     {
         vector<unique_ptr<ITransaction>> res;
 
-        if(get<0>(result->resultParameters->getTuple<bool>(0)))
+        if(result->status == TransactionStatus::FAILED)
         {
-            res.push_back(make_unique<Traverse>(txn->getSeizedAgents()[0], false));
+            res.push_back(make_unique<PickUpFromConveyorBelt>());
         }
         else
         {
-            res.push_back(make_unique<PickUpFromConveyorBelt>(txn->getSeizedAgents()[0]));
+            if(get<0>(result->resultParameters->getTuple<bool>(0)))
+            {
+                res.push_back(make_unique<Traverse>(txn->getSeizedAgents()[0], false));
+            }
+            else
+            {
+                res.push_back(make_unique<PickUpFromConveyorBelt>(txn->getSeizedAgents()[0]));
+            }
         }
 
         return res;
@@ -139,14 +146,23 @@ private:
     {
         vector<unique_ptr<ITransaction>> res;
 
-        if(get<0>(result->resultParameters->getTuple<bool>(0)))
+        if(result->status == TransactionStatus::FAILED)
         {
-            res.push_back(make_unique<ScanPart>(txn->getSeizedAgents()[0]));            
+            res.push_back(make_unique<PickUpFromInspectionQueue>());
         }
         else
         {
-            res.push_back(make_unique<PickUpFromInspectionQueue>(txn->getSeizedAgents()[0]));
+            if(get<0>(result->resultParameters->getTuple<bool>(0)))
+            {
+                res.push_back(make_unique<ScanPart>(txn->getSeizedAgents()[0]));            
+            }
+            else
+            {
+                res.push_back(make_unique<PickUpFromInspectionQueue>(txn->getSeizedAgents()[0]));
+            }
         }
+
+        
 
         return res;
     }
@@ -269,5 +285,7 @@ public:
         case 12:
             return create12(move(txn), previousResult);
         }
+
+        throw InvalidModelParameterException((char*)"Invalid transaction type");
     }
 };

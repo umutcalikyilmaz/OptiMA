@@ -132,13 +132,12 @@ namespace OptiMA
 
     void MultiAgentModel::setBatchSize(int batchSize)
     {
-        numCheck_ = true;
         batchSize_ = batchSize;
     }
 
-    void MultiAgentModel::setTrigger()
+    void MultiAgentModel::setTimeout(chrono::milliseconds timeout)
     {
-        trigger_ = true;
+        timeout_ = timeout;
     }
 
     void MultiAgentModel::keepStatsFile(string statsFilePath)

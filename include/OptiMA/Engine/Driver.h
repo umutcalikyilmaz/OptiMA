@@ -40,7 +40,6 @@ namespace OptiMA
         long startingTime_;
         atomic_bool running_;
         bool keepStats_;
-        bool trigger_;
         bool settingsCreated_;
 
         Listener* createListener();

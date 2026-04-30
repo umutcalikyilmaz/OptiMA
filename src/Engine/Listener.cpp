@@ -22,31 +22,12 @@ namespace OptiMA
 
     Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster) : driver_(driver),
     amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster), optimized_(false), numCheck_(false), running_(true),
-    txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true) { }
+    txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true) { }    
 
     Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator,
-    IScheduler* scheduler, bool trigger) : driver_(driver), amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster),
-    estimator_(estimator), scheduler_(scheduler), optimized_(true), numCheck_(false), running_(true), triggerRunning_(trigger),
-    txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true)
-    {
-        if(trigger)
-        {
-            thread triggerThread(&Listener::checkTrigger, this);
-            triggerThread.detach();
-        }        
-    }    
-
-    Listener::Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator,
-    IScheduler* scheduler, bool trigger, int batchSize) : driver_(driver), amanager_(amanager), pmanager_(pmanager), postmaster_(postmaster),
-    estimator_(estimator), scheduler_(scheduler), optimized_(true), batchSize_(batchSize), numCheck_(true), running_(true),
-    triggerRunning_(trigger), txnQueue_(new TransactionQueue()), transactionCount_(0), currentNum_(0), initial_(true)
-    {
-        if(trigger)
-        {
-            thread triggerThread(&Listener::checkTrigger, this);
-            triggerThread.detach();
-        }
-    }
+    IScheduler* scheduler, int batchSize, chrono::milliseconds timeout) : driver_(driver), amanager_(amanager), pmanager_(pmanager),
+    postmaster_(postmaster), estimator_(estimator), scheduler_(scheduler), optimized_(true), batchSize_(batchSize), numCheck_(true),
+    running_(true), txnQueue_(new TransactionQueue(batchSize, timeout)), transactionCount_(0), currentNum_(0), initial_(true) {  }
 
     void Listener::sendTransaction(unique_ptr<ITransaction> txn)
     {
@@ -63,22 +44,14 @@ namespace OptiMA
         
         if(optimized_)
         {
+            
             txn->setLength(estimator_->estimateLength(*txn));
-            txnQueue_->silentPush(move(txn));            
-
-            if((currentNum_ >= batchSize_ && numCheck_) || initial_)
-            {
-                initial_ = false;
-                currentNum_ = 0;
-                txnQueue_->trigger();
-            }
+            txnQueue_->silentPush(move(txn));
         }
         else
         {
             txnQueue_->push(move(txn));
         }
-
-        currentNum_++;
     }
 
     void Listener::trigger()
