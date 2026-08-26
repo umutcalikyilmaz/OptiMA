@@ -5,7 +5,7 @@ The optimum multi agent framework (OptiMA) is  a framework for developing transa
 OptiMA is developed as a part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The results of the study is compiled in a research paper, which is pending approval for publication. The information for citation will be provided after the publication.
 
 ## Installation
-OptiMA is designed for Debian and currently it is not compatible with Windows or MacOS. It uses the TxnSP software library (https://github.com/umutcalikyilmaz/TxnSP) for transaction scheduling. The user is not required ot install TxnSP manually, it is installed automatically during the installation of OptiMA. For standard installation, the following bash instructions should be executed in the project's root folder.
+OptiMA is designed for Debian and currently it is not compatible with Windows or MacOS. It uses the TxnSP software library (https://github.com/umutcalikyilmaz/TxnSP) for transaction scheduling. The user is not required to install TxnSP manually, it is installed automatically during the installation of OptiMA. For standard installation, the following bash instructions should be executed in the project's root folder.
 
 ```bash
 mkdir build
