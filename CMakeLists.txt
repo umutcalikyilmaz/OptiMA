@@ -15,8 +15,6 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 
 option(ENABLE_MIP "Enable MIP solver support (requires the third-party library SCIP)" OFF)
 
-set(ENABLE_MIP ON CACHE BOOL "Enable MIP solver support (forwarded from OptiMA)" FORCE)
-
 add_subdirectory(TxnSP)
 
 add_library(${BINARY_NAME} SHARED src/AgentModels/Agent.cpp src/AgentModels/AgentPool.cpp src/AgentModels/PostBox.cpp
