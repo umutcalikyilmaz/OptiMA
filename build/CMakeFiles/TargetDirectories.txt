@@ -1,0 +1,14 @@
+/home/umut/github/OptiMA/build/CMakeFiles/optima.dir
+/home/umut/github/OptiMA/build/CMakeFiles/edit_cache.dir
+/home/umut/github/OptiMA/build/CMakeFiles/rebuild_cache.dir
+/home/umut/github/OptiMA/build/CMakeFiles/list_install_components.dir
+/home/umut/github/OptiMA/build/CMakeFiles/install.dir
+/home/umut/github/OptiMA/build/CMakeFiles/install/local.dir
+/home/umut/github/OptiMA/build/CMakeFiles/install/strip.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/txnsp.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/edit_cache.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/rebuild_cache.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/list_install_components.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/install.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/install/local.dir
+/home/umut/github/OptiMA/build/TxnSP/CMakeFiles/install/strip.dir

@@ -1,0 +1,182 @@
+[
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/AgentModels/Agent.cpp.o -c /home/umut/github/OptiMA/src/AgentModels/Agent.cpp",
+  "file": "/home/umut/github/OptiMA/src/AgentModels/Agent.cpp",
+  "output": "CMakeFiles/optima.dir/src/AgentModels/Agent.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/AgentModels/AgentPool.cpp.o -c /home/umut/github/OptiMA/src/AgentModels/AgentPool.cpp",
+  "file": "/home/umut/github/OptiMA/src/AgentModels/AgentPool.cpp",
+  "output": "CMakeFiles/optima.dir/src/AgentModels/AgentPool.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/AgentModels/PostBox.cpp.o -c /home/umut/github/OptiMA/src/AgentModels/PostBox.cpp",
+  "file": "/home/umut/github/OptiMA/src/AgentModels/PostBox.cpp",
+  "output": "CMakeFiles/optima.dir/src/AgentModels/PostBox.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/AgentManager.cpp.o -c /home/umut/github/OptiMA/src/Engine/AgentManager.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/AgentManager.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/AgentManager.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/DefaultEstimator.cpp.o -c /home/umut/github/OptiMA/src/Engine/DefaultEstimator.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/DefaultEstimator.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/DefaultEstimator.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/Driver.cpp.o -c /home/umut/github/OptiMA/src/Engine/Driver.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/Driver.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/Driver.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/Executor.cpp.o -c /home/umut/github/OptiMA/src/Engine/Executor.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/Executor.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/Executor.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/ExecutorState.cpp.o -c /home/umut/github/OptiMA/src/Engine/ExecutorState.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/ExecutorState.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/ExecutorState.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/Listener.cpp.o -c /home/umut/github/OptiMA/src/Engine/Listener.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/Listener.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/Listener.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/MultiAgentModel.cpp.o -c /home/umut/github/OptiMA/src/Engine/MultiAgentModel.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/MultiAgentModel.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/MultiAgentModel.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/PluginManager.cpp.o -c /home/umut/github/OptiMA/src/Engine/PluginManager.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/PluginManager.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/PluginManager.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/Postmaster.cpp.o -c /home/umut/github/OptiMA/src/Engine/Postmaster.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/Postmaster.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/Postmaster.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/Scheduler.cpp.o -c /home/umut/github/OptiMA/src/Engine/Scheduler.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/Scheduler.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/Scheduler.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Engine/TransactionFactory.cpp.o -c /home/umut/github/OptiMA/src/Engine/TransactionFactory.cpp",
+  "file": "/home/umut/github/OptiMA/src/Engine/TransactionFactory.cpp",
+  "output": "CMakeFiles/optima.dir/src/Engine/TransactionFactory.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Shared/Exceptions.cpp.o -c /home/umut/github/OptiMA/src/Shared/Exceptions.cpp",
+  "file": "/home/umut/github/OptiMA/src/Shared/Exceptions.cpp",
+  "output": "CMakeFiles/optima.dir/src/Shared/Exceptions.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/Shared/Message.cpp.o -c /home/umut/github/OptiMA/src/Shared/Message.cpp",
+  "file": "/home/umut/github/OptiMA/src/Shared/Message.cpp",
+  "output": "CMakeFiles/optima.dir/src/Shared/Message.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/TransactionModels/TransactionQueue.cpp.o -c /home/umut/github/OptiMA/src/TransactionModels/TransactionQueue.cpp",
+  "file": "/home/umut/github/OptiMA/src/TransactionModels/TransactionQueue.cpp",
+  "output": "CMakeFiles/optima.dir/src/TransactionModels/TransactionQueue.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build",
+  "command": "/usr/bin/g++ -Doptima_EXPORTS -I/home/umut/github/OptiMA/include -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/optima.dir/src/TransactionModels/TransactionResult.cpp.o -c /home/umut/github/OptiMA/src/TransactionModels/TransactionResult.cpp",
+  "file": "/home/umut/github/OptiMA/src/TransactionModels/TransactionResult.cpp",
+  "output": "CMakeFiles/optima.dir/src/TransactionModels/TransactionResult.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/PoolingModels/SchedulePool.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/PoolingModels/SchedulePool.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/PoolingModels/SchedulePool.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/PoolingModels/SchedulePool.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/PoolingModels/SubsetPool.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/PoolingModels/SubsetPool.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/PoolingModels/SubsetPool.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/PoolingModels/SubsetPool.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/ProblemModels/Problem.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/ProblemModels/Problem.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/ProblemModels/Problem.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/ProblemModels/Problem.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/ProblemModels/Schedule.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/ProblemModels/Schedule.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/ProblemModels/Schedule.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/ProblemModels/Schedule.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/ProblemModels/Subset.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/ProblemModels/Subset.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/ProblemModels/Subset.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/ProblemModels/Subset.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Shared/SharedModels.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Shared/SharedModels.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Shared/SharedModels.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Shared/SharedModels.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Solvers/DPSolver.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Solvers/DPSolver.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Solvers/DPSolver.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Solvers/DPSolver.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Solvers/ESSolver.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Solvers/ESSolver.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Solvers/ESSolver.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Solvers/ESSolver.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Solvers/SASolver.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Solvers/SASolver.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Solvers/SASolver.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Solvers/SASolver.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Structs/SolverOutput.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Structs/SolverOutput.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Structs/SolverOutput.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Structs/SolverOutput.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Testers/Analyzer.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Testers/Analyzer.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Testers/Analyzer.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Testers/Analyzer.cpp.o"
+},
+{
+  "directory": "/home/umut/github/OptiMA/build/TxnSP",
+  "command": "/usr/bin/g++ -Dtxnsp_EXPORTS -I/home/umut/github/OptiMA/TxnSP/include -g -std=gnu++20 -fPIC -o CMakeFiles/txnsp.dir/src/Testers/Evaluator.cpp.o -c /home/umut/github/OptiMA/TxnSP/src/Testers/Evaluator.cpp",
+  "file": "/home/umut/github/OptiMA/TxnSP/src/Testers/Evaluator.cpp",
+  "output": "TxnSP/CMakeFiles/txnsp.dir/src/Testers/Evaluator.cpp.o"
+}
+]
