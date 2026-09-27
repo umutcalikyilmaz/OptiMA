@@ -1,18 +1,19 @@
-# OptiMA
-OptiMA is  a framework for designing and executing transaction-based multi-agent systems. The framework applies strict locking procedures to ensure a high-level of isolation and consistency. It uses transaction schedule optimization to mitigate the performance drawbacks that might be caused by these strict procedures.
+# TxnSP
+TxnSP is a software library for creating and solving instances of the transaction scheduling problem. For this purpose, the library includes four solvers: `ESSolver` (the exhaustive search solver), `DPSolver` (the dynamic programming solver), `MIPSolver` (the mixed-integer programming solver), and `SASolver` (the simulated annealing solver). It also contains modules for analyzing the solution spaces of problem instances and evaluating the performance of the included solvers.
 
 ## Citation
-OptiMA is developed as part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The study is presented in the paper given below.
+TxnSP was developed as part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The study is presented in the paper below.
 
 [OptiMA: A Transaction-Based Framework with Throughput Optimization for Very Complex Multi-Agent Systems](https://arxiv.org/pdf/2511.03761)
 
 ### Version Used in the Paper
-The experiments reported in the paper were conducted using **OptiMA v1.0**. The exact version of the source code used for those experiments is archived here:
 
-**[OptiMA v1.0](https://github.com/umutcalikyilmaz/OptiMA/tree/v1.0)**
+The experiments reported in the paper were conducted using **TxnSP v1.0**. The exact version of the source code used for those experiments is archived here:
+
+**[TxnSP v1.0](https://github.com/umutcalikyilmaz/TxnSP/tree/v1.0)**
 
 ## Installation
-OptiMA requires a compiler with `C++20` support. It is designed for Debian-based systems and is currently not compatible with Windows or macOS. It uses the **[TxnSP Software Library](https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz)** for transaction scheduling, which is fetched automatically from GitHub during CMake configuration and built as part of OptiMA. For a standard installation, execute the following commands in the project's root directory:
+TxnSP requires a compiler with `C++20` support. It is designed for Debian-based systems and is currently not compatible with Windows or macOS. For a standard installation, execute the following commands in the project's root directory:
 
 ```bash
 mkdir build
@@ -21,7 +22,8 @@ cmake ..
 sudo make install
 ```
 
-The `MIPSolver` module, which is a part of **TxnSP**, is not included in the standard installation. To install OptiMA library with `MIPSolver`, the **[SCIP Optimization Suite](https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz)** must first be installed. Then, execute the following commands in the project's root directory:
+The `MIPSolver` module is not included in the standard installation. To install the TxnSP library with `MIPSolver`, the **[SCIP Optimization Suite](https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz)** must first be installed. Then, execute the following commands in the TxnSP project's root directory:
+
 
 ```bash
 mkdir build
@@ -31,282 +33,122 @@ sudo make install
 ```
 
 ## Usage
+
 ### Importing the Library
-After installing OptiMA, it can be imported to a project by adding the following lines in the CMakeLists.txt file.
+After installing TxnSP, it can be imported into a project by adding the following lines to the `CMakeLists.txt` file:
 
 ```cmake
-find_package(OptiMA REQUIRED)
-target_link_libraries(my_project OptiMA::optima)
+find_package(TxnSP REQUIRED)
+target_link_libraries(my_project TxnSP::txnsp)
 ```
 
-The library is included in the project using the code below.
+To use the problem instance creation and solver functionalities of TxnSP, include the main header file as follows.
 
 ```c++
-#include <OptiMA/OptiMA.h>
+#include <TxnSP/TxnSP.h>
 ```
 
-The framework also includes a benchmark module, FactoryFloor, that simulates the production process in a fully automized manufacturing facility. Use the following code to include the FactoryFloor benchmark.
+To also use the Analyzer and Evaluator modules, include the following header:
 
 ```c++
-#include <OptiMA/FactoryFloor.h>
+#include <TxnSP/TxnSPTest.h>
 ```
 
-### Memory Class
-
-OptiMA includes the shared shared class `Memory` that is used by various modules of the framework for storing and transferring multimodal information. A `Memory` instance is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. The code block below shows an example of creating a `Memory` instance, and inserting and retrieving two `std::tuple` objects into it.
+### Problem Generation
+In TxnSP, a problem instance can be created in two ways. The first is random problem generation, which uses either a normal distribution or a uniform distribution to randomly generate the problem parameters. In both cases, the conflict matrix is generated using a Bernoulli distribution, where the conflict probability is specified by the user. The following examples show random problem creation using normal and uniform distributions.
 
 ```c++
-// constructs a Memory object and returns std::shared_ptr<Memory> type
-std::shared_ptr<OptiMA::Memory> memory = OptiMA::generateMemory();     
-
-// A std::tuple<int, double, bool> is created and inserted into memory
-memory->addTuple(
-    intValue,        //an example variable of integer type
-    doubleValue,     //an example variable of double type
-    boolValue        //an example variable of boolean type
+// Problem creation using normal distribution
+TxnSP::Problem problem(
+    jobCount,                                  // int: Number of jobs
+    machineCount,                              // int: Number of machines
+    TxnSP::ProbabilityDistribution::Normal,    // enum: Distribution type
+    lengthMean,                                // double: Mean of job lengths
+    lengthStd,                                 // double: Standard deviation of job lengths
+    conflictParity                             // double: Probability that any pair of jobs conflicts
 );
-
-// A std::tuple<std::string, double> is created and inserted into memory
-memory->addTuple(
-    stringValue,        //an example variable of std::string type
-    doubleValue         //an example variable of double type
-);
-
-// the first tuple is retrieved
-std::tuple<int, double, bool> firstTuple = memory->getTuple<int, double, bool>(0);
-
-// the second tuple is retrieved   
-std::tuple<std::string, double> secondTuple = memory->getTuple<std::string, double>(1);
 ```
-
-### Model Design
-The process of designing a model in OptiMA includes the following steps:
-- Designing agent templates to determine the capabilities of different agent types,
-- Designing plugins that are used by agents as additional tools,
-- Defining the relationships between different agent types and plugins using model constraints,
-- Designing transaction templates which are used to generate transactions with intended functionalities in runtime,
-- Customizing several modules to control execution-level details of the model.
-
-Please refer to the associated paper for a more detailed understanding of the general logic and principles of model design in OptiMA. In the following, the necessary steps for designing a system using the OptiMA framework are given.
-
-#### Creating Plugins
-To create plugin classes, the template class `Plugin` must be derived. When creating a plugin class, the operate function must be overridden. This function is called by an agent to use the plugin during execution.
 
 ```c++
-class MyPlugin : public OptiMA::Plugin<MyPlugin>
-{
-public:
-    std::shared_ptr<OptiMA::Memory> operate(std::shared_ptr<OptiMA::Memory> inputParameters) override
-    {
-        // contents of the operate function
-    }
-};
+// Problem creation using uniform distribution
+TxnSP::Problem problem(
+    jobCount,                                  // int: Number of jobs
+    machineCount,                              // int: Number of machines
+    TxnSP::ProbabilityDistribution::Uniform,   // enum: Distribution type
+    lowerLimit,                                // double: Lower limit of job lengths
+    upperLimit,                                // double: Upper limit of job lengths
+    conflictParity                             // double: Probability that any pair of jobs conflicts
+);
 ```
-#### Creating Agent Templates
-In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the `AgentTemplate` class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restrictions on the signature of the input parameters. An example agent template class is given below.
+
+TxnSP also allows custom problem instances to be created by providing a vector of job lengths and a conflict matrix, as shown below.
 
 ```c++
-class MyAgentTemplate : public OptiMA::AgentTemplate<MyAgentTemplate>
-{
-public:
-    std::shared_ptr<OptiMA::Memory> callableFunction1()
-    {
-        // contents of the callableFunction1
-    }
-
-    std::shared_ptr<OptiMA::Memory> callableFunction2(int input)
-    {
-        // contents of the callableFunction2
-    }
-};
+// Custom problem creation
+TxnSP::Problem problem(
+    jobCount,          // int: Number of jobs
+    machineCount,      // int: Number of machines
+    lengths,           // std::vector<double>: Job lengths
+    conflicts          // std::vector<std::vector<uint8_t>>: Conflict matrix
+);
 ```
 
-#### Creating Transactions
+### Problem Solution
+After a problem instance has been created using one of the methods described above, it can be solved using one of the four solvers provided by the TxnSP library. Examples of using each solver are shown below.
 
-Every process in OptiMA is enclosed in a transaction for high-level isolation and consistency. A transaction can perform complex operations that include actions from multiple agents. In runtime, transactions are generated from transaction templates, that are included in the model design. This can be done by creating a class derived from the `Transaction` class. `Transaction` does not have a default constructor, so a user-defined transaction class is required to call one of the two constructors of `OptiMA::Transaction`. The purpose of this structure is to force the user to provide the necessary information when creating a transaction class, such as the type of the transaction, subtype of the transaction and the set of plugins to be used during the execution of the transaction.
-
-When creating a transaction class, the `Transaction::procedure` function is also required to be overridden, which defines the operation to be run during the execution of the transaction. The user also has the option to override the `Transaction::commitProcedure` and `Transaction::rollbackProcedure` functions, which are executed when the transaction is committed and rolled back respectively. Two example transaction classes are shown below.
-
+#### Dynamic Programming
 ```c++
-// a transaction class 
-class MyTransaction
-    : public OptiMA::Transaction
-{
-    // First constructor for the OptiMA::Transaction class is used
-    MyTransaction(int transactionType, int transactionSubType, std::set<int> pluginSet)
-        : OptiMA::Transaction(
-            transactionType,        // type of the transaction (used by framework components during execution)
-            transactionSubType,     // subtype of the transaction (used by framework components during execution)
-            pluginSet               // set of plugins used during execution (used for the locking process during execution)
-          )
-    {
-        // contents of the constructor
-    }
+// Create the dynamic programming solver
+TxnSP::DPSolver dps;
 
-    // Second constructor for the OptiMA::Transaction class is used
-    MyTransaction(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet)
-        : OptiMA::Transaction(
-            agents,                // std::vector of seized agents that can be used by the transaction
-            transactionType,       // type of the transaction (used by framework components during execution)
-            transactionSubType,    // subtype of the transaction (used by framework components during execution)
-            pluginSet              // set of plugins used during execution (used for the locking process during execution)
-          )
-    {
-        // contents of the constructor
-    }
+// Prepare the input structure
+TxnSP::SolverInput input;
+input.prb = &problem;                                    // Assign a pointer to the problem instance
+input.DP_SolutionType = TxnSP::SolutionType::Exact;      // Use the exact solution method, other option is TxnSP::SolutionType::Approximate
 
-    std::shared_ptr<Memory> procedure() override {
-        // contents of the procedure function
-    }
-
-    void commitProcedure() {
-        // contents of the commitProcedure function
-    }
-
-    void rollbackProcedure() {
-        // contents of the rollbackProcedure function
-    }
-};
+// Solve the problem and get the output
+TxnSP::SolverOutput output = dps.solve(input);    // Returns a struct containing solution details
 ```
-#### Creating Transaction Factory
-Transaction factory is a component of the framework that creates new transactions after execution of a transaction, depending on its results. The inner workings of this module are required to be provided by the user, since they heavily depend on the design of a specific multi-agent system. A model-specific transaction factory class is derived from the `TransactionFactory` class. Two functions of the base class, `TransactionFactory::generateInitialTransactions` and `TransactionFactory::generateTransactions` must be overridden by the user. The first one is called in the beginning of the model execution to create the initial transactions, and the second is called after each transaction execution to create new transactions depending on the result.
 
+#### Exhaustive Search
 ```c++
+// Create the exhaustive search solver
+TxnSP::ESSolver ess;
 
-class MyTransactionFactory
-    : public OptiMA::TransactionFactory
-{
-    std::vector<unique_ptr<OptiMA::ITransaction>> generateInitialTransactions() override
-    {
-        // contents of the generateInitialTransactions function
-    }
+// Prepare the input structure
+TxnSP::SolverInput input;
+input.prb = &problem;           // Assign a pointer to the problem instance
 
-    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, std::shared_ptr<OptiMA::TransactionResult> result) override
-    {
-        // contents of the generateTransactions function
-    }    
-};
+// Solve the problem and get the output
+TxnSP::SolverOutput output = ess.solve(input);  // Returns a struct containing solution details
 ```
 
-#### Creating Estimator (Optional)
-Estimator module is used to estimate the lengths of the transactions during model execution. The estimated lengths are used for the schedule optimization process. OptiMA includes a default estimator module that keeps the statistics for different transaction types and subtypes, and uses them for estimation. To do this, first the model should be executed without optimization to keep statistics, which can then used for an optimized execution.
 
-The user is allowed to implement their own estimator, if they find performance of the default estimator insufficient. This is done by deriving a custom class from the `Estimator` class. The derived class is required to override the `estimateLength` function as shown below.
-
+#### Mixed-Integer Programming
 ```c++
+// Create the mixed-integer programming solver
+TxnSP::MIPSolver mips;
 
-class MyEstimator
-    : public OptiMA::Estimator
-{
-    double estimateLength(const ITransaction& txn) override
-    {
-        // contents of the estimateLength function
-    }   
-};
+// Prepare the input structure
+TxnSP::SolverInput input;
+input.prb = &problem;           // Assign a pointer to the problem instance
+
+// Solve the problem and get the output
+TxnSP::SolverOutput output = mips.solve(input);  // Returns a struct containing solution details
 ```
 
-#### Creating Multi-Agent Model
-The latest step of model design is to create a `MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optionally estimator) are inserted into the model. The user is also expected to define the constraints of the models and set additional parameters related to model execution. Creation and modification of a `MultiAgentModel` object is demonstrated in the following code block.
-
+#### Simulated Annealing
 ```c++
+// Create the simulated annealing solver
+TxnSP::SASolver sas;
 
-OptiMA::MultiAgentModel model;
+// Prepare the input structure
+TxnSP::SolverInput input;
+input.prb = &problem;                                            // Assign a pointer to the problem instance
+input.SA_MaxTemperature = maxTemperature;                        // double: Set maximum temperature
+input.SA_DecrementType = TxnSP::TemperatureEvolution::Linear;    // Use linear temperature decrement, other options are TxnSP::Logarithmic and TxnSP::Slow
+input.SA_DecrementParameter = decrementParameter;                // double: Cooling rate
 
-// Adding the custom plugins
-model.addPlugin<MyPlugin1>(
-    pluginId1,                       // int: A unique id that is used for reference the plugin during execution
-    OptiMA::PluginType::SHAREABLE    // Marks that this transaction is shareable and does not require locking
-);
-
-model.addPlugin<MyPlugin2>(
-    pluginId2,                            // int: A unique id that is used for reference during execution
-    OptiMA::PluginType::NONSHAREABLE      // Marks that this transaction is non-shareable and require locking
-);
-
-// Adding the custom agent roles
-model.addAgentTemplate<MyAgentTemplate>(
-    roleId,            // int: A unique id that is used for reference the agent role during execution
-    initialNumber,     // int: The initial number of agents having this role
-    maximumNumber,     // int: The maximum number of agents having this role
-    startingAgent      // bool: The boolean value showing if the agents of this role will be started at the beginning of the model execution
-);
-
-// Adding supervisor-subordinate relationship
-model.addSupervisor(
-    supervisorAgentRole,     // int: Id of the supervisor agent role
-    subordinateAgentRole     // int: Id of the subordinate agent role
-);
-
-// Giving authorization for communication (the two agents roles are allowed to communicate with each other)
-model.addCommunication(
-    agentRole1,        // int: Id of the first agent role
-    agentRole2         // int: Id of the second agent role
-);
-
-// Giving authorization to use a plugin to an agent role
-model->allowPluginUse(
-    agentRole,        // int: Id of the agent role with the authorization to use the plugin
-    pluginId          // int: Id of the plugin that can be used by the indicated agent role
-);
-
-// Creating an object of a custom transaction factory class and assigning a pointer to it to the model
-MyTransactionFactory transactionFactory;
-model.setTransactionFactory(&transactionFactory);
-
-// Creating an object of a custom estimator class and assigning it to the model (optional)
-// MyEstimator estimator;
-// model->setEstimator(&estimator);
-
-// Recording statistics for default estimator (when this option is not selected, default estimator cannot be used)
-// model->keepStatsFile(statsFilePath);
-
-// Using default estimator (it uses the stats file created in another run of the model)
-model.useDefaultEstimator(
-    statsFilePath    // std::string: Path to the file containing the transaction statistics
-);
-
-// Setting the number of threads to be used in execution
-model.setThreadNumber(
-    threadNumber        // int: Number of threads to be used in execution
-);
-
-// Creating a OptiMA::SchedulerSettings object and inserting it to the model
-OptiMA::SchedulerSettings schSettings;
-
-// bool: Set true to enable schedule optimization during execution
-schSettings.optimized = optimized;
-
-// int: Size of the transaction batch in an optimized execution
-schSettings.batchSize = batchSize;
-
-// bool: Set true to enable thread trigger which starts scheduling when a thread is idle without checking batch size
-schSettings.trigger = trigger;
-
-// TxnSP::SolverType: Type of the optimizer used in an optimized execution
-schSettings.optimizationMethod = optimization method
-
-// TxnSP::SolutionType: If DPSolver is selected for optimization, this setting determines the solution type (exact or approximate)
-schSettings.DP_SolutionType = DP_SolutionType;
-
-// double: If SASolver is selected for optimization, this setting determines the maximum temperature value
-schSettings.SA_MaxTemperature = SA_MaxTemperature;
-
-// TxnSP::TemperatureEvolution: If SASolver is selected for optimization, this setting determines the temperature decrement type (linear, exponential or slow)
-schSettings.SA_DecrementType ) SA_DecrementType;
-
-// double: If SASolver is selected for optimization, this setting determines the decrement parameter
-schSettings.SA_DecrementParameter = SA_DecrementParameter;
-
-// Setting the scheduler settings of the model
-model.setSchedulerSettings(&schSettings);
+// Solve the problem and get the output
+TxnSP::SolverOutput output = sas.solve(input);   // Returns a struct containing solution details
 ```
-
-### Model Execution
-After creating and modifying a model, the user can create an `OptiMA::Driver` object and execute the created model. The code below shows how to create a driver, execute a model and get the results of the execution.
-
-```c++
-OptiMA::Driver drv;
-driver.startModel(model);
-std::shared_ptr<OptiMA::Memory> result = drv.getOutputParameters();
-```
-The result can only be obtained after the execution is terminated by an authorized agent.
