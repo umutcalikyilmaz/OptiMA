@@ -2,21 +2,21 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/Inspector.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class PickUpFromInspectionQueue : public Transaction
+class PickUpFromInspectionQueue final : public Transaction
 {
-private:
-
-    bool ownerSet_;
-
 public:
 
-    PickUpFromInspectionQueue() : Transaction(6, 0, {3}), ownerSet_(false) { }
+    PickUpFromInspectionQueue()
+        : Transaction(6, 0, {3}),
+          ownerSet_(false) { }
 
-    PickUpFromInspectionQueue(Agent* agent) : Transaction({agent}, 6, 0, {3}), ownerSet_(true) { }
+    PickUpFromInspectionQueue(Agent* agent)
+        : Transaction({agent}, 6, 0, {3}),
+          ownerSet_(true) { }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
-        shared_ptr<Memory> res;
+        std::shared_ptr<Memory> res;
 
         if(ownerSet_)
         {
@@ -30,4 +30,8 @@ public:
 
         return res;
     }
+
+private:
+
+    bool ownerSet_;
 };

@@ -11,17 +11,37 @@ namespace OptiMA
     {
     public:
 
-        virtual shared_ptr<TransactionResult> execute() = 0;
+        class ExecutorKey
+        {
+        private:
 
-        virtual void setId(long transactionId) = 0; 
+            ExecutorKey() {}
 
-        virtual void setLength(double length) = 0;
+            friend class Executor;
+        };
 
-        virtual void setDriver(IDriver* driver) = 0;
+        class ListenerKey
+        {
+        private:
+            
+            ListenerKey() {}
 
-        virtual void setAgentManager(AgentManager* amanager) = 0;
+            friend class Listener;
+        };
 
-        virtual void setPostMaster(Postmaster* postmaster) = 0;        
+        virtual std::shared_ptr<TransactionResult> execute(ExecutorKey) = 0;
+
+        virtual void setId(ListenerKey, long transactionId) = 0; 
+
+        virtual void setLength(ListenerKey, double length) = 0;
+
+        virtual void setDriver(ListenerKey, IDriver* driver) = 0;
+
+        virtual void setAgentManager(ListenerKey, AgentManager* amanager) = 0;
+
+        virtual void setPostmaster(ListenerKey, Postmaster* postmaster) = 0; 
+        
+        virtual void findNonShareable(ListenerKey, PluginManager* pmanager) = 0;
 
         virtual double getLength() const = 0;        
 
@@ -29,11 +49,9 @@ namespace OptiMA
 
         virtual int getSubType() const = 0;
 
-        virtual const vector<Agent*>& getSeizedAgents() const = 0;
+        virtual const std::vector<Agent*>& getSeizedAgents() const = 0;
 
-        virtual const set<int>& getNonShareblePlugins() const = 0;
-
-        virtual void findNonShareable(PluginManager* pmanager) = 0;
+        virtual const std::set<int>& getNonShareablePlugins() const = 0;        
 
         virtual ~ITransaction() = default;
     };

@@ -2,17 +2,18 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/Inspector.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class ReportResult : public Transaction
+class ReportResult final : public Transaction
 {
 public:
 
-    ReportResult(Agent* agent) : Transaction({agent}, 8, 0, {6}){ }
+    ReportResult(Agent* agent)
+        : Transaction({agent}, 8, 0, {6}){ }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
-        shared_ptr<Memory> res = generateMemory();
+        std::shared_ptr<Memory> res = generateMemory();
         Agent* agent = getSeizedAgents()[0];
-        shared_ptr<Memory> operationResult = executeInstruction(agent, &Inspector::reportResult);
+        std::shared_ptr<Memory> operationResult = executeInstruction(agent, &Inspector::reportResult);
         bool stopped = get<0>(operationResult->getTuple<bool>(0));
 
         operationResult = executeInstruction(agent, &Inspector::place);

@@ -8,56 +8,66 @@ namespace OptiMA
     {
     public:
 
-        AgentManager(vector<IAgentFactory*>& agentFactories, vector<int>& agentTypes, vector<int>& initialNumbers,
-        vector<int>& maxNumbers, vector<pair<int,int>>& relationships, vector<pair<int,int>>& communications,
-        vector<pair<int,int>> pluginAccesses, vector<int>& initialAgents, PluginManager* pmanager, long startingTime);        
+        class DriverKey
+        {
+        private:
 
-        Agent* seizeAgent(long transactionId, int agentType);
+            DriverKey() {}
 
-        void releaseAgent(int agentId);
+            friend class Driver;
+        };        
 
-        void transferOwnership(int transactionId, int agentId);
+        AgentManager(DriverKey, const std::vector<std::unique_ptr<IAgentFactory>>& agentFactories,
+            const std::vector<int>& agentTypes, const std::vector<int>& initialNumbers,
+            const std::vector<int>& maxNumbers, const std::vector<std::pair<int,int>>& relationships,
+            const std::vector<std::pair<int,int>>& communications,
+            const std::vector<std::pair<int,int>>& pluginAccesses, const std::vector<int>& initialAgents,
+            PluginManager* pmanager, long startingTime);        
 
-        void requestCreateAgent(long transactionId, int senderId, int senderType, int targetType) override;
+        Agent* seizeAgent(TransactionKey, long transactionId, int agentType);
 
-        void requestCreateAndStartAgent(long transactionId, int senderId, int senderType, int targetType) override;
+        void releaseAgent(TransactionKey, int agentId);
 
-        void requestStartAgent(long transactionId, int senderId, int senderType, int targetId) override;
+        void transferOwnership(TransactionKey, int transactionId, int agentId);
 
-        void requestStopAgent(long transactionId, int senderId, int senderType, int targetId) override;
+        void requestCreateAgent(AgentKey, long transactionId, int senderId, int senderType, int targetType) override;
 
-        void requestDestroyAgent(long transactionId, int senderId, int senderType, int targetId) override;
+        void requestCreateAndStartAgent(AgentKey, long transactionId, int senderId, int senderType, int targetType) override;
 
-        shared_ptr<Memory> getAgentInfo(int senderId, int senderType, int targetId) override;
+        void requestStartAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) override;
 
-        shared_ptr<Memory> getAgentInfos(int senderId, int senderType, int targetType) override;
+        void requestStopAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) override;
 
-        void commit(long transactionId) override;
+        void requestDestroyAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) override;
 
-        void rollback(long transactionId) override;
+        std::shared_ptr<Memory> getAgentInfo(AgentKey, int senderId, int senderType, int targetId) override;
 
-        void startInitialAgents();
+        std::shared_ptr<Memory> getAgentInfos(AgentKey, int senderId, int senderType, int targetType) override;
 
-        Postmaster* getPostmaster();
+        void commit(TransactionKey, long transactionId) override;
 
-        ~AgentManager();
+        void rollback(TransactionKey, long transactionId) override;
+
+        void startInitialAgents(DriverKey);
+
+        Postmaster* getPostmaster(DriverKey);
 
     private:
 
-        Postmaster* postmaster_;
-        map<int,int> maxNumbers_;
-        map<int,int> currentNumbers_;
-        map<int,AgentPool*> agentPools_;
-        map<int,pair<Agent*,int>> agentMap_;
-        map<int,vector<int>> agentIds_;
-        map<int,vector<int>> supervisors_;
-        map<int,vector<int>> subordinates_;        
-        map<int,vector<int>> tools_;
-        map<int,AgentInfo*> agentInfos_;
-        vector<int> initialAgents_;
-        map<long, vector<pair<AgentOperationType, int>>> transactionLog_;
-        mutex agentLock_;
-        mutex logLock_;
+        std::unique_ptr<Postmaster> postmaster_;
+        std::map<int, int> maxNumbers_;
+        std::map<int, int> currentNumbers_;
+        std::map<int, std::unique_ptr<AgentPool>> agentPools_;
+        std::map<int, std::pair<std::unique_ptr<Agent>,int>> agentMap_;
+        std::map<int, std::vector<int>> agentIds_;
+        std::map<int, std::vector<int>> supervisors_;
+        std::map<int, std::vector<int>> subordinates_;        
+        std::map<int, std::vector<int>> tools_;
+        std::map<int, std::unique_ptr<AgentInfo>> agentInfos_;
+        std::vector<int> initialAgents_;
+        std::map<long, std::vector<std::pair<AgentOperationType, int>>> transactionLog_;
+        std::mutex agentLock_;
+        std::mutex logLock_;
         long startingTime_;
         int agentCount_;
 
@@ -74,7 +84,5 @@ namespace OptiMA
         void stopAgent(int targetId);
 
         void destroyAgent(int targetId);
-
-        
     };
 }

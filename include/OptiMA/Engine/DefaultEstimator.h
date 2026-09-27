@@ -8,13 +8,13 @@ namespace OptiMA
     {
     public:
     
-        DefaultEstimator(string statsFilePath);
+        DefaultEstimator(const std::string& statsFilePath);
 
         double estimateLength(const ITransaction& txn) override;
 
     private:
 
-        map<int,map<int,double>> averages_;
+        std::map<int,std::map<int, double>> averages_;
         double generalAverage_;
     };
 }

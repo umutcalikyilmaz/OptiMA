@@ -8,24 +8,31 @@ namespace OptiMA
     {
     public:
 
-        shared_ptr<Memory> operatePlugin(int pluginId, shared_ptr<Memory> input)
+        virtual ~AgentTemplate() = default;
+
+    protected:
+
+        AgentTemplate() { }    
+
+        std::shared_ptr<Memory> operatePlugin(int pluginId, std::shared_ptr<Memory> input)
         {
-            PluginInstance* pi = pmanager_->seizePlugin(pluginId, agentType_);
-            auto res = pi->operate(input);
-            pmanager_->releasePlugin(pi);
+            PluginInstance* pi = pmanager_->seizePlugin(typename PluginManager::AgentKey {}, pluginId, agentType_);
+            auto res = pi->operate(typename PluginInstance::AgentKey {}, input);
+            pmanager_->releasePlugin(typename PluginManager::AgentKey {}, pi);
             return res;
         }
 
-        shared_ptr<Memory> sendMessage(int agentId, shared_ptr<Message> msg)
+        std::shared_ptr<Memory> sendMessage(int agentId, std::shared_ptr<Message> msg)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
             
             try
             {
-                postmaster_->sendToId(currentTransaction_, agentId_, agentType_, agentId, msg);
+                postmaster_->sendToId(typename Postmaster::AgentKey {}, currentTransaction_, agentId_, agentType_,
+                    agentId, msg);
                 output->addTuple(true);
             }
-            catch(const exception e)
+            catch(const std::exception e)
             {
                 output->addTuple(false, e.what());
             }
@@ -33,16 +40,17 @@ namespace OptiMA
             return output;
         }
 
-        shared_ptr<Memory> sendMessageToAll(int agentType, shared_ptr<Message> msg)
+        std::shared_ptr<Memory> sendMessageToAll(int agentType, std::shared_ptr<Message> msg)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
             
             try
             {
-                postmaster_->sendToType(currentTransaction_, agentId_, agentType_, agentType, msg);
+                postmaster_->sendToType(typename Postmaster::AgentKey {}, currentTransaction_, agentId_,
+                    agentType_, agentType, msg);
                 output->addTuple(true);
             }
-            catch(const exception e)
+            catch(const std::exception e)
             {
                 output->addTuple(false, e.what());
             }
@@ -50,133 +58,131 @@ namespace OptiMA
             return output;
         }
 
-        shared_ptr<Memory> getAgentInfoById(int agentId)
+        std::shared_ptr<Memory> getAgentInfoById(int agentId)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                output = amanager_->getAgentInfo(agentId_, agentType_, agentId);
+                output = amanager_->getAgentInfo(typename IAgentManager::AgentKey {}, agentId_, agentType_, agentId);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what);
+                output->addTuple(false, (std::string)e.what);
             }
 
             return output;
         }
 
-        shared_ptr<Memory> getAgentInfoByType(int agentType)
+        std::shared_ptr<Memory> getAgentInfoByType(int agentType)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                output = amanager_->getAgentInfos(agentId_, agentType_, agentType);
+                output = amanager_->getAgentInfos(typename IAgentManager::AgentKey {}, agentId_, agentType_, agentType);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }
             
             return output;
         }
 
-        shared_ptr<Memory> createAgent(int agentType)
+        std::shared_ptr<Memory> createAgent(int agentType)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                amanager_->requestCreateAgent(currentTransaction_, agentId_, agentType_, agentType);
+                amanager_->requestCreateAgent(typename IAgentManager::AgentKey {}, currentTransaction_, agentId_, agentType_, agentType);
                 output->addTuple(true);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }
 
             return output;
         }
 
-        shared_ptr<Memory> createAndStartAgent(int agentType)
+        std::shared_ptr<Memory> createAndStartAgent(int agentType)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                amanager_->requestCreateAndStartAgent(currentTransaction_, agentId_, agentType_, agentType);
+                amanager_->requestCreateAndStartAgent(typename IAgentManager::AgentKey {}, currentTransaction_, agentId_, agentType_, agentType);
                 output->addTuple(true);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }
 
             return output;
         }
 
-        shared_ptr<Memory> destroyAgent(int agentId)
+        std::shared_ptr<Memory> destroyAgent(int agentId)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                amanager_->requestDestroyAgent(currentTransaction_, agentId_, agentType_, agentId);
+                amanager_->requestDestroyAgent(typename IAgentManager::AgentKey {}, currentTransaction_, agentId_, agentType_, agentId);
                 output->addTuple(true);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }
             
             return output;
         }
 
-        shared_ptr<Memory> startAgent(int agentId)
+        std::shared_ptr<Memory> startAgent(int agentId)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                amanager_->requestStartAgent(currentTransaction_, agentId_, agentType_, agentId);
+                amanager_->requestStartAgent(typename IAgentManager::AgentKey {}, currentTransaction_, agentId_, agentType_, agentId);
                 output->addTuple(true);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }            
 
             return output;
         }
 
-        shared_ptr<Memory> stopAgent(int agentId)
+        std::shared_ptr<Memory> stopAgent(int agentId)
         {
-            shared_ptr<Memory> output = generateMemory();
+            std::shared_ptr<Memory> output = generateMemory();
 
             try
             {
-                amanager_->requestStopAgent(currentTransaction_, agentId_, agentType_, agentId);
+                amanager_->requestStopAgent(typename IAgentManager::AgentKey {}, currentTransaction_, agentId_, agentType_, agentId);
                 output->addTuple(true);
             }
-            catch(const exception& e)
+            catch(const std::exception& e)
             {
-                output->addTuple(false, (string)e.what());
+                output->addTuple(false, (std::string)e.what());
             }
             
             return output;
         }    
 
-        queue<shared_ptr<Message>> checkMessages()
+        std::queue<std::shared_ptr<Message>> checkMessages()
         {
-            return postBox_->checkMessages();
+            return postBox_->checkMessages(typename PostBox::AgentKey {});
         }
 
         void clearMemory() override
         {
             static_cast<A*>(this)->clearMemory();
         }
-
-        virtual ~AgentTemplate() = default;
     };
 }

@@ -8,25 +8,20 @@
 
 using namespace OptiMA;
 
-class Transporter : public AgentTemplate<Transporter>
+class Transporter final : public AgentTemplate<Transporter>
 {
-    NormalRandom traverseRandom_;
-    unique_ptr<Job> currentJob_;
-    double scale_;
-    int lastOperation_;
-    bool stopRequested_;
-
 public:
 
-    Transporter() : traverseRandom_(transpoterTraverseMean * simulationTimeScale, transpoterTraverseStd * simulationTimeScale, randomNumberSeed),
-    stopRequested_(false) { }
+    Transporter()
+        : traverseRandom_(transpoterTraverseMean * simulationTimeScale, transpoterTraverseStd * simulationTimeScale, randomNumberSeed),
+          stopRequested_(false) { }
 
-    shared_ptr<Memory> selfStop()
+    std::shared_ptr<Memory> selfStop()
     {
         return stopAgent(getAgentId());
     }
 
-    shared_ptr<Memory> pickUp()
+    std::shared_ptr<Memory> pickUp()
     {
         auto msgs = checkMessages();
 
@@ -35,8 +30,8 @@ public:
             stopRequested_ = true;
         }
 
-        shared_ptr<Memory> operationResult = operatePlugin(1, nullptr);
-        shared_ptr<Memory> res = make_shared<Memory>();
+        std::shared_ptr<Memory> operationResult = operatePlugin(1, nullptr);
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
 
         if(operationResult == nullptr)
         {
@@ -44,19 +39,19 @@ public:
         }
         else
         {
-            currentJob_ = move(get<0>(operationResult->getTuple<unique_ptr<Job>>(0)));
+            currentJob_ = std::move(std::get<0>(operationResult->getTuple<std::unique_ptr<Job>>(0)));
             res->addTuple(true);
         }
 
         return res;
     }
 
-    shared_ptr<Memory> traverse()
+    std::shared_ptr<Memory> traverse()
     {
         int duration = (int)traverseRandom_.generate();
-        this_thread::sleep_for(chrono::milliseconds(duration));
+        std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 
-        shared_ptr<Memory> res = make_shared<Memory>();
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
 
         auto msgs = checkMessages();
         res->addTuple(!msgs.empty());
@@ -64,13 +59,21 @@ public:
         return res;
     }
 
-    shared_ptr<Memory> place()
+    std::shared_ptr<Memory> place()
     {
-        shared_ptr<Memory> input = generateMemory();
+        std::shared_ptr<Memory> input = generateMemory();
         input->addTuple(false);
         input->addTuple(move(currentJob_));
         return operatePlugin(3, input);
     }
 
     void clearMemory() override { }
+
+private:
+
+    NormalRandom traverseRandom_;
+    std::unique_ptr<Job> currentJob_;
+    double scale_;
+    int lastOperation_;
+    bool stopRequested_;
 };

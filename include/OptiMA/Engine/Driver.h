@@ -17,28 +17,28 @@ namespace OptiMA
 
         void startModel(MultiAgentModel& model);
 
-        void haltProgram(shared_ptr<Memory> outputParameters) override;        
+        void haltProgram(std::shared_ptr<Memory> outputParameters) override;        
 
-        shared_ptr<Memory> getOutputParameters();
+        std::shared_ptr<Memory> getOutputParameters();
 
     private:
 
         TransactionFactory* tfactory_;
-        PluginManager* pmanager_;
-        Executor* executor_;
-        Scheduler* scheduler_;
-        Estimator* estimator_;
-        Listener* listener_;
-        TransactionQueue* listenerQueue_;
-        AgentManager* amanager_;
+        std::unique_ptr<PluginManager> pmanager_;
+        std::unique_ptr<AgentManager> amanager_;
+        std::unique_ptr<Executor> executor_;
+        std::unique_ptr<Estimator> estimator_;
+        std::unique_ptr<Listener> listener_;
+        std::unique_ptr<Scheduler> scheduler_;        
         Postmaster* postmaster_;
-        SchedulerSettings* schSettings_;
-        shared_ptr<Memory> outputParameters_;
-        mutex mainLock_;
-        condition_variable cv_;
-        string keepStatsFilePath_;
+        TransactionQueue* listenerQueue_;        
+        std::unique_ptr<SchedulerSettings> schSettings_;
+        std::shared_ptr<Memory> outputParameters_;
+        std::mutex mainLock_;
+        std::condition_variable cv_;
+        std::string keepStatsFilePath_;
         long startingTime_;
-        atomic_bool running_;
+        std::atomic_bool running_;
         bool keepStats_;
         bool settingsCreated_;
 

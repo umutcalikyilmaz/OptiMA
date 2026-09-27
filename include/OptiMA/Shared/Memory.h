@@ -8,25 +8,25 @@ namespace OptiMA
     public:
         
         template <typename...Args>
-        void addTuple(tuple<Args...> record)
+        void addTuple(std::tuple<Args...> record)
         {
-            tuples_.push_back(make_shared<TupleWrapper<Args...>>(record));
+            tuples_.push_back(std::make_shared<TupleWrapper<Args...>>(record));
         }
 
         template <typename...Args>
         void addTuple(Args... parameters)
         {
-            tuples_.push_back(make_shared<TupleWrapper<Args...>>(forward<Args>(parameters)...));
+            tuples_.push_back(std::make_shared<TupleWrapper<Args...>>(std::forward<Args>(parameters)...));
         }
 
         template <typename...Args>
-        tuple<Args...>& getTuple(int index)
+        std::tuple<Args...>& getTuple(int index)
         {
             return tuples_[index]->getTuple<Args...>();
         }
 
         template <typename...Args>
-        const tuple<Args...>& getTuple(int index) const
+        const std::tuple<Args...>& getTuple(int index) const
         {
             return tuples_[index]->getTuple<Args...>();
         }
@@ -38,6 +38,6 @@ namespace OptiMA
         
     private:
     
-        vector<shared_ptr<ITupleWrapper>> tuples_;
+        std::vector<std::shared_ptr<ITupleWrapper>> tuples_;
     };
 }

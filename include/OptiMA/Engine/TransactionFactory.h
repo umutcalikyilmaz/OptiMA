@@ -9,22 +9,38 @@ namespace OptiMA
     {
     public:
 
-        void initiate();
+        class DriverKey
+        {
+        private:
 
-        void postProcess(unique_ptr<ITransaction> txn, shared_ptr<TransactionResult> result);
+            DriverKey() {}
 
-    protected:
+            friend class Driver;
+        };
 
-        virtual vector<unique_ptr<ITransaction>> generateInitialTransactions() = 0;
+        class ExecutorKey
+        {
+        private: 
 
-        virtual vector<unique_ptr<ITransaction>> generateTransactions(unique_ptr<ITransaction> txn, shared_ptr<TransactionResult> result) = 0;        
+            ExecutorKey() {}
+
+            friend class Executor;
+        };
+
+        void insertListener(DriverKey, IListener* listener);
+
+        void initiate(DriverKey);
+
+        void postProcess(ExecutorKey, std::unique_ptr<ITransaction> txn,
+            std::shared_ptr<TransactionResult> result);
 
     private:
 
         IListener* listener_;
 
-        void insertListener(IListener* listener);
+        virtual std::vector<std::unique_ptr<ITransaction>> generateInitialTransactions() = 0;
 
-        friend class Driver;
+        virtual std::vector<std::unique_ptr<ITransaction>> generateTransactions(std::unique_ptr<ITransaction> txn,
+            std::shared_ptr<TransactionResult> result) = 0;
     };
 }

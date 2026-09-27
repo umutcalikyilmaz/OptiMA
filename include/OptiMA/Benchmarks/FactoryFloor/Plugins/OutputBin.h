@@ -5,29 +5,30 @@
 
 using namespace OptiMA;
 
-class OutputBin : public Plugin<OutputBin>
+class OutputBin final : public Plugin<OutputBin>
 {
-private:
-
-    vector<pair<int,bool>> completedJobs_;
-    mutex binLock_;
-    int totalJobNum_;
-
 public:
 
-    OutputBin() : totalJobNum_(totalJobNumber) { }
+    OutputBin()
+        : totalJobNum_(totalJobNumber) { }
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
-        lock_guard<mutex> lock(binLock_);
+        std::lock_guard<std::mutex> lock(binLock_);
         auto inputTuple = inputParameters->getTuple<int,bool>(0);
-        completedJobs_.push_back(make_pair(get<0>(inputTuple), get<1>(inputTuple)));
+        completedJobs_.push_back(std::make_pair(std::get<0>(inputTuple), std::get<1>(inputTuple)));
         
-        shared_ptr<Memory> res = generateMemory();
+        std::shared_ptr<Memory> res = generateMemory();
         res->addTuple(completedJobs_.size() == totalJobNum_);
         completed++;
         warmedUp = true;
         warmupCondition.notify_one();
         return res;
     }
+
+private:
+
+    std::vector<std::pair<int,bool>> completedJobs_;
+    std::mutex binLock_;
+    int totalJobNum_;
 };

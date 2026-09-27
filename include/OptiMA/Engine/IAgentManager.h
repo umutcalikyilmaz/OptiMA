@@ -7,23 +7,42 @@ namespace OptiMA
     {
     public:
         
-        virtual void requestCreateAgent(long transactionId, int senderId, int senderType, int targetType) = 0;
+        class AgentKey
+        {
+        private:
 
-        virtual void requestCreateAndStartAgent(long transactionId, int senderId, int senderType, int targetType) = 0;
+            AgentKey() {}
+            
+            template <class A>
+            friend class AgentTemplate;
+        };
 
-        virtual void requestStartAgent(long transactionId, int senderId, int senderType, int targetId) = 0;
+        class TransactionKey
+        {
+        private:
 
-        virtual void requestStopAgent(long transactionId, int senderId, int senderType, int targetId) = 0;
+            TransactionKey() {}
 
-        virtual void requestDestroyAgent(long transactionId, int senderId, int senderType, int targetId) = 0;
+            friend class Transaction;
+        };
 
-        virtual shared_ptr<Memory> getAgentInfo(int senderId, int senderType, int targetId) = 0;
+        virtual void requestCreateAgent(AgentKey, long transactionId, int senderId, int senderType, int targetType) = 0;
 
-        virtual shared_ptr<Memory> getAgentInfos(int senderId, int senderType, int targetType) = 0;
+        virtual void requestCreateAndStartAgent(AgentKey, long transactionId, int senderId, int senderType, int targetType) = 0;
 
-        virtual void commit(long transactionId) = 0;
+        virtual void requestStartAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) = 0;
 
-        virtual void rollback(long transactionId) = 0;
+        virtual void requestStopAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) = 0;
+
+        virtual void requestDestroyAgent(AgentKey, long transactionId, int senderId, int senderType, int targetId) = 0;
+
+        virtual std::shared_ptr<Memory> getAgentInfo(AgentKey, int senderId, int senderType, int targetId) = 0;
+
+        virtual std::shared_ptr<Memory> getAgentInfos(AgentKey, int senderId, int senderType, int targetType) = 0;
+
+        virtual void commit(TransactionKey, long transactionId) = 0;
+
+        virtual void rollback(TransactionKey, long transactionId) = 0;
 
         virtual ~IAgentManager() = default;
     };

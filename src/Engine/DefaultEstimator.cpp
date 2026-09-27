@@ -2,11 +2,11 @@
 
 namespace OptiMA
 {
-    DefaultEstimator::DefaultEstimator(string statsFilePath)
+    DefaultEstimator::DefaultEstimator(const std::string& statsFilePath)
     {
-        fstream file;
-        file.open(statsFilePath, fstream::in);
-        string line;
+        std::fstream file;
+        file.open(statsFilePath, std::fstream::in);
+        std::string line;
         generalAverage_ = 0;
         int count = 0;
 
@@ -15,7 +15,7 @@ namespace OptiMA
             int size = line.size();
             int pos = 0;
             int st = 0;
-            vector<int> keys;
+            std::vector<int> keys;
             double value;
 
             while(pos < size)
@@ -53,7 +53,7 @@ namespace OptiMA
         {
             return averages_.at(txn.getType()).at(txn.getSubType());
         }
-        catch(exception e)
+        catch(std::exception e)
         {
             return generalAverage_;
         }

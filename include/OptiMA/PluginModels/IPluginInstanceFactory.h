@@ -7,6 +7,6 @@ namespace OptiMA
     {
     public:
         
-        virtual PluginInstance* createPluginInstance() = 0;
+        virtual std::unique_ptr<PluginInstance> createPluginInstance() = 0;
     };
 }

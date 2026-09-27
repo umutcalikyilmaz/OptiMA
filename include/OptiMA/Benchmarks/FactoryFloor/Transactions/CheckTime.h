@@ -2,19 +2,17 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/FloorManager.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class CheckTime : public Transaction
+class CheckTime final : public Transaction
 {
-private:
-
-    bool ownerSet_;
-
 public:
 
-    CheckTime() : Transaction(12, 0, {}), ownerSet_(false) { }
+    CheckTime()
+        : Transaction(12, 0, {}),
+          ownerSet_(false) { }
 
     CheckTime(Agent* agent) : Transaction({agent}, 12, 0, {}), ownerSet_(true) { }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
         if(ownerSet_)
         {
@@ -25,4 +23,8 @@ public:
             return executeInstruction(seizeAgent(3), &FloorManager::checkTime);
         }
     }
+
+private:
+
+    bool ownerSet_;
 };

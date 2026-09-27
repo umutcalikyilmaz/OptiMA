@@ -7,6 +7,6 @@ namespace OptiMA
     {
     public:
      
-        virtual Agent* createAgent() = 0;
+        virtual std::unique_ptr<Agent> createAgent() = 0;
     };
 }

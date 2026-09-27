@@ -11,16 +11,25 @@ namespace OptiMA
     {
     public:
 
-        Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster);
+        class DriverKey
+        {
+        private:
 
-        Listener(IDriver* driver, AgentManager* amanager, PluginManager* pmanager, Postmaster* postmaster, Estimator* estimator, IScheduler* scheduler,
-        int batchSize, chrono::milliseconds timeout);
+            DriverKey() {}
 
-        void sendTransaction(unique_ptr<ITransaction> txn) override;
+            friend class Driver;
+        };
 
-        void trigger() override;
+        Listener(DriverKey, IDriver* driver, AgentManager* amanager, PluginManager* pmanager,
+            Postmaster* postmaster);
 
-        TransactionQueue* getTransactionQueue();
+        Listener(DriverKey, IDriver* driver, AgentManager* amanager, PluginManager* pmanager,
+            Postmaster* postmaster, Estimator* estimator, IScheduler* scheduler, int batchSize,
+            std::chrono::milliseconds timeout);
+
+        void sendTransaction(TransactionFactoryKey, std::unique_ptr<ITransaction> txn) override;        
+
+        TransactionQueue* getTransactionQueue(DriverKey);
 
         ~Listener();
 
@@ -32,22 +41,24 @@ namespace OptiMA
         AgentManager* amanager_;
         PluginManager* pmanager_;
         Postmaster* postmaster_;
-        TransactionQueue* txnQueue_;
-        mutex timerLock_;
-        mutex triggerLock_;
-        mutex queueLock_;
-        condition_variable deleteCondition_;
-        condition_variable triggerCondition_;
+        std::unique_ptr<TransactionQueue> txnQueue_;
+        std::mutex timerLock_;
+        std::mutex triggerLock_;
+        std::mutex queueLock_;
+        std::condition_variable deleteCondition_;
+        std::condition_variable triggerCondition_;
         long transactionCount_;
         int batchSize_;
         int currentNum_;
-        atomic_bool running_;
-        atomic_bool triggerRunning_;
-        atomic_bool triggered_;
+        std::atomic_bool running_;
+        std::atomic_bool triggerRunning_;
+        std::atomic_bool triggered_;
         bool numCheck_;
         bool optimized_;
         bool initial_;
 
         void checkTrigger();
+
+        void trigger();
     };
 }

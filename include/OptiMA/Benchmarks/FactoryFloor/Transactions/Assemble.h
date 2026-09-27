@@ -2,21 +2,22 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/AssemblyWorker.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class Assemble : public Transaction
+class Assemble final : public Transaction
 {
-private:
-
-    vector<pair<OperationType, int>> description_;
-
 public:
 
-    Assemble(Agent* agent, int subtype, vector<pair<OperationType, int>> description, set<int> requestedPlugins) : Transaction({agent}, 1,
-    subtype, requestedPlugins), description_(description){ }
+    Assemble(Agent* agent, int subtype, std::vector<std::pair<OperationType, int>> description,
+        std::set<int> requestedPlugins)
+        : Transaction({agent}, 1, subtype, requestedPlugins), description_(description){ }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
-        shared_ptr<Memory> res;
+        std::shared_ptr<Memory> res;
         res = executeInstruction(getSeizedAgents()[0], &AssemblyWorker::operate, description_);
         return res;
     }
+
+private:
+
+    std::vector<std::pair<OperationType, int>> description_;
 };

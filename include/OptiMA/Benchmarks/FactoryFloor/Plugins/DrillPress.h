@@ -7,32 +7,29 @@
 
 using namespace OptiMA;
 
-class DrillPress : public Plugin<DrillPress>
+class DrillPress final : public Plugin<DrillPress>
 {
-    NormalRandom* operationRandoms_[2];
-    UniformRandom probabilityRandom_;
-
 public:
 
-    DrillPress() : probabilityRandom_(0, 1, randomNumberSeed)
+    DrillPress()
+        : probabilityRandom_(0, 1, randomNumberSeed)
     {
         for(int i = 0; i < 2; i++)
         {
-            operationRandoms_[i] = new NormalRandom(drillingOperationMeans[i] * simulationTimeScale, drillingOperationStds[i] * simulationTimeScale, randomNumberSeed * (6 + i));            
+            operationRandoms_[i] = std::make_unique<NormalRandom>(drillingOperationMeans[i] * simulationTimeScale, drillingOperationStds[i] * simulationTimeScale, randomNumberSeed * (6 + i));            
         }
     }
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
         int operationType = get<0>(inputParameters->getTuple<int>(0));
         int duration = operationRandoms_[operationType]->generate();
-        this_thread::sleep_for(chrono::milliseconds(duration));
+        std::this_thread::sleep_for(std::chrono::milliseconds(duration));
         return nullptr;
     }
 
-    ~DrillPress()
-    {
-        delete operationRandoms_[0];
-        delete operationRandoms_[1];
-    }
+private:
+
+    std::unique_ptr<NormalRandom> operationRandoms_[2];
+    UniformRandom probabilityRandom_;
 };

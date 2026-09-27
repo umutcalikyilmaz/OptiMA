@@ -10,19 +10,15 @@
 
 using namespace OptiMA;
 
-class ConveyorBelt : public Plugin<ConveyorBelt>
+class ConveyorBelt final : public Plugin<ConveyorBelt>
 {
-    NormalRandom rnd_;
-    NormalRandom rnd2_;
-    queue<unique_ptr<Job>> jobQueue_;
-    mutex queueLock_;
-
 public:
 
-    ConveyorBelt() : rnd_(conveyorBeltPickUpMean * simulationTimeScale, conveyorBeltPickUpStd * simulationTimeScale, randomNumberSeed),
-    rnd2_(conveyorBeltPlaceMean * simulationTimeScale, conveyorBeltPlaceStd * simulationTimeScale, randomNumberSeed) { }
+    ConveyorBelt()
+        : rnd_(conveyorBeltPickUpMean * simulationTimeScale, conveyorBeltPickUpStd * simulationTimeScale, randomNumberSeed),
+          rnd2_(conveyorBeltPlaceMean * simulationTimeScale, conveyorBeltPlaceStd * simulationTimeScale, randomNumberSeed) { }
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
         if(inputParameters == nullptr)
         {
@@ -34,14 +30,14 @@ public:
                 return nullptr;
             }
 
-            auto job = move(jobQueue_.front());
+            auto job = std::move(jobQueue_.front());
             jobQueue_.pop();
             queueLock_.unlock();
             
             int duration = (int)rnd_.generate();
-            this_thread::sleep_for(chrono::milliseconds(duration));
+            std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 
-            auto res = make_shared<Memory>();
+            auto res = std::make_shared<Memory>();
             res->addTuple(move(job));
             return res;
         }
@@ -53,7 +49,7 @@ public:
             {            
                 auto res = generateMemory();
     
-                lock_guard<mutex> lock(queueLock_);
+                std::lock_guard<std::mutex> lock(queueLock_);
                 int count = jobQueue_.size();
                 res->addTuple(count);
                 return res;
@@ -61,13 +57,20 @@ public:
             else
             {
                 int duration = (int)rnd2_.generate();
-                this_thread::sleep_for(chrono::milliseconds(duration));
+                std::this_thread::sleep_for(std::chrono::milliseconds(duration));
     
-                lock_guard<mutex> lock(queueLock_);
-                jobQueue_.push(move(get<0>(inputParameters->getTuple<unique_ptr<Job>>(1))));
+                std::lock_guard<std::mutex> lock(queueLock_);
+                jobQueue_.push(std::move(std::get<0>(inputParameters->getTuple<std::unique_ptr<Job>>(1))));
             }        
     
             return nullptr;
         }
     }
+
+private:
+
+    NormalRandom rnd_;
+    NormalRandom rnd2_;
+    std::queue<std::unique_ptr<Job>> jobQueue_;
+    std::mutex queueLock_;
 };

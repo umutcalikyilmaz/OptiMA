@@ -4,11 +4,14 @@ namespace OptiMA
 {
     Message::Message() { }
 
-    Message::Message(string& prompt) : prompt(prompt) { }
+    Message::Message(const std::string& prompt)
+        : prompt(prompt) { }
 
-    Message::Message(shared_ptr<Memory> parameters) : parameters(parameters) { }
+    Message::Message(std::shared_ptr<Memory> parameters)
+        : parameters(parameters) { }
 
-    Message::Message(string& prompt, shared_ptr<Memory> parameters) : prompt(prompt), parameters(parameters) { }
+    Message::Message(const std::string& prompt, std::shared_ptr<Memory> parameters)
+        : prompt(prompt), parameters(parameters) { }
 
     int Message::getSenderId()
     {

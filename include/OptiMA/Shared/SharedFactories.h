@@ -3,28 +3,28 @@
 
 namespace OptiMA
 {
-    inline shared_ptr<Memory> generateMemory()
+    inline std::shared_ptr<Memory> generateMemory()
     {
-        return make_shared<Memory>();
+        return std::make_shared<Memory>();
     }    
 
-    inline shared_ptr<Message> generateMessage()
+    inline std::shared_ptr<Message> generateMessage()
     {
-        return make_shared<Message>();
+        return std::make_shared<Message>();
     }
 
-    inline shared_ptr<Message> generateMessage(string& prompt)
+    inline std::shared_ptr<Message> generateMessage(std::string& prompt)
     {
-        return make_shared<Message>(prompt);
+        return std::make_shared<Message>(prompt);
     }
 
-    inline shared_ptr<Message> generateMessage(shared_ptr<Memory> parameters)
+    inline std::shared_ptr<Message> generateMessage(std::shared_ptr<Memory> parameters)
     {
-        return make_shared<Message>(parameters);
+        return std::make_shared<Message>(parameters);
     }
 
-    inline shared_ptr<Message> generateMessage(string& prompt, shared_ptr<Memory> parameters)
+    inline std::shared_ptr<Message> generateMessage(std::string& prompt, std::shared_ptr<Memory> parameters)
     {
-        return make_shared<Message>(prompt, parameters);
+        return std::make_shared<Message>(prompt, parameters);
     }
 }

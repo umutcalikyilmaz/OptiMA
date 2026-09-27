@@ -2,7 +2,7 @@
 
 namespace OptiMA
 {
-    void reorder(int* list, int size, int ind)
+    void reorder(std::vector<int> list, int size, int ind)
     {
         for(int i = size; i > ind; i--)
         {
@@ -10,7 +10,7 @@ namespace OptiMA
         }
     }
     
-	int findPlace(double* list, int* inds, double val, int size)
+	int findPlace(const std::vector<double>& list, std::vector<int>& inds, double val, int size)
 	{
 		if(size == 0)
 		{
@@ -49,7 +49,7 @@ namespace OptiMA
 		return ll;
 	}
 
-	int findPlace2(vector<double> list, int* inds, double val, int size)
+	int findPlace2(const std::vector<double>& list, std::vector<int>& inds, double val, int size)
 	{
 		if(size == 0)
 		{
@@ -88,7 +88,7 @@ namespace OptiMA
 		return ll;
 	}
 
-    void orderAscending(int* list, double* vlist, int m)
+    void orderAscending(std::vector<int>& list, const std::vector<double>& vlist, int m)
     {
         for(int i = 0; i < m; i++)
         {
@@ -98,7 +98,7 @@ namespace OptiMA
         }
     }
 
-    void orderDescending(int* list, vector<double> vlist, int m)
+    void orderDescending(std::vector<int>& list, const std::vector<double>& vlist, int m)
     {
         for(int i = 0; i < m; i++)
         {
@@ -111,27 +111,22 @@ namespace OptiMA
     void Scheduler::findConflicts()
     {        
         txnNum_ = txns_.size();
-        map<int,vector<int>> pluginUse;
-        conflicts_ = new bool*[txnNum_];
+        std::map<int ,std::vector<int>> pluginUse;
+        conflicts_.resize(txnNum_);
 
         for(int i = 0; i < txnNum_; i++)
         {
-            conflicts_[i] = new bool[txnNum_];
-
-            for(int j = 0; j < txnNum_; j++)
-            {
-                conflicts_[i][j] = false;
-            }
+            conflicts_[i].assign(txnNum_, 0);
         }
 
         for(int nsp : nonShareablePlugins_)
         {
-            pluginUse[nsp] = vector<int>();
+            pluginUse[nsp] = std::vector<int>();
         }
 
         for(int i = 0; i < txnNum_; i++)
         {
-            auto nonShareable = txns_[i]->getNonShareblePlugins();
+            auto nonShareable = txns_[i]->getNonShareablePlugins();
 
             for(int nsp : nonShareable)
             {
@@ -141,58 +136,62 @@ namespace OptiMA
 
         for(int i = 0; i < txnNum_; i++)
         {
-            auto nonShareable = txns_[i]->getNonShareblePlugins();
+            auto nonShareable = txns_[i]->getNonShareablePlugins();
 
             for(int nsp : nonShareable)
             {
                 for(int t : pluginUse[nsp])
                 {
-                    conflicts_[i][t] = true;
+                    conflicts_[i][t] = 1;
                 }
             }
         }
     }
 
-    void Scheduler::createPlan(TxnSP::SolverOutput*& out)
+    TxnSP::SolverOutput Scheduler::createPlan()
     {
-        lengths_ = new double[txnNum_];
+        lengths_.clear();
+        lengths_.reserve(txnNum_);
 
         for(int i = 0; i < txnNum_; i++)
         {
-            lengths_[i] = txns_[i]->getLength();
+            lengths_.push_back(txns_[i]->getLength());
         }
 
-        sinp_.prb = new TxnSP::Problem(txns_.size(), threadNum_, lengths_, conflicts_);
-        out = slv_->solve(sinp_);
-        delete sinp_.prb;
+        auto prb = std::make_unique<TxnSP::Problem>(txns_.size(), threadNum_, lengths_, conflicts_);
+        sinp_.prb = prb.get();
+        return slv_->solve(sinp_);
     }
 
-    Scheduler::Scheduler(SchedulerSettings* settings, IExecutor* executor, const set<int>& nonShareablePlugins,
-    int threadNum) : executor_(executor), nonShareablePlugins_(nonShareablePlugins), threadNum_(threadNum), running_(false),
-    stopped_(true)
+    Scheduler::Scheduler(DriverKey, SchedulerSettings* settings, IExecutor* executor,
+        const std::set<int>& nonShareablePlugins, int threadNum)
+        : executor_(executor),
+          nonShareablePlugins_(nonShareablePlugins),
+          threadNum_(threadNum),
+          running_(false),
+          stopped_(true)
     {
-        perm_ = settings->permuted;
         optimized_ = settings->optimized;
 
         switch (settings->optimizationMethod)
         {
         case TxnSP::SolverType::DP :
-            slv_ = new TxnSP::DPSolver();
+            slv_ = std::make_unique<TxnSP::DPSolver>();
             sinp_.DP_SolutionType = settings->DP_SolutionType;
             break;
 
         case TxnSP::SolverType::ES :
-            slv_ = new TxnSP::ESSolver();
+            slv_ = std::make_unique<TxnSP::ESSolver>();
             break;
 
         #ifdef ENABLE_MIP
         case TxnSP::SolverType::MIP :
-            slv_ = new TxnSP::MIPSolver();
+            slv_ = std::make_unique<TxnSP::MIPSolver>();
             break;
         #endif
 
         case TxnSP::SolverType::SA :
-            slv_ = new TxnSP::SASolver();
+            slv_ = std::make_unique<TxnSP::SASolver>();
             sinp_.SA_DecrementParameter = settings->SA_DecrementParameter;
             sinp_.SA_DecrementType = settings->SA_DecrementType;
             sinp_.SA_MaxTemperature = settings->SA_MaxTemperature;
@@ -202,14 +201,13 @@ namespace OptiMA
         if(settings->permuted)
         {
             optimizePtr_ = &Scheduler::permutation;
-            order_ = new int[threadNum];
-            norder_ = new int[threadNum];
-            total_ = new double[threadNum];
+            order_.reserve(threadNum);
+            norder_.resize(threadNum);
+            total_.assign(threadNum, 0);
 
             for(int i = 0; i < threadNum; i++)
             {
-                order_[i] = i;
-                total_[i] = 0;
+                order_.push_back(i);
             }
         }
         else
@@ -218,29 +216,40 @@ namespace OptiMA
         }       
     }
 
-    void Scheduler::optimize(TxnSP::SolverOutput*& out)
+    void Scheduler::insertTransactionQueue(DriverKey, TransactionQueue* txnQueue)
+    {
+        running_ = true;
+        txnQueue_ = txnQueue;
+    }
+
+    void Scheduler::startScheduling(DriverKey)
+    {
+        running_ = true;
+        stopped_ = false;
+        (this->*optimizePtr_)();
+    }
+
+    TxnSP::SolverOutput Scheduler::optimize()
     {
         txns_ = txnQueue_->pullAll();
         findConflicts();
-        createPlan(out);
+        return createPlan();
     }
 
     void Scheduler::noPermutation()
     {
         while(running_)
         {            
-            TxnSP::SolverOutput* out;
-            optimize(out);
+            TxnSP::SolverOutput out = optimize();
 
             for(int i = 0; i < threadNum_; i++)
             {
-                for(int job : out->jobs[i])
+                for(int job : out.jobs[i])
                 {
-                    executor_->assignTransaction(move(txns_[job]), i);
+                    executor_->assignTransaction(typename IExecutor::SchedulerKey {}, move(txns_[job]), i);
                 }
             }
 
-            delete out;
             txns_.clear();
         }
 
@@ -252,23 +261,20 @@ namespace OptiMA
     {
         while(running_)
         {
-            TxnSP::SolverOutput* out;
-            optimize(out);
-
-            orderDescending(norder_, out->processingTimes, threadNum_);
+            TxnSP::SolverOutput out = optimize();
+            orderDescending(norder_, out.processingTimes, threadNum_);
                 
             for(int i = 0; i < threadNum_; i++)
             {
-                for(int job : out->jobs[norder_[i]])
+                for(int job : out.jobs[norder_[i]])
                 {
-                    executor_->assignTransaction(move(txns_[job]), order_[i]);
+                    executor_->assignTransaction(typename IExecutor::SchedulerKey {}, move(txns_[job]), order_[i]);
                 }
 
-                total_[order_[i]] += out->processingTimes[norder_[i]];
+                total_[order_[i]] += out.processingTimes[norder_[i]];
             }
                 
             orderAscending(order_, total_, threadNum_);
-            delete out;
             txns_.clear();
         }
 
@@ -276,36 +282,14 @@ namespace OptiMA
         cv_.notify_one();
     }
 
-    void Scheduler::insertTransactionQueue(TransactionQueue* txnQueue)
-    {
-        running_ = true;
-        txnQueue_ = txnQueue;
-    }
-
-    void Scheduler::startScheduling()
-    {
-        running_ = true;
-        stopped_ = false;
-        (this->*optimizePtr_)();
-    }
-
     Scheduler::~Scheduler()
     {
         running_ = false;
         txnQueue_->trigger();
-        unique_lock<mutex> lock(deleteLock_);
+        std::unique_lock<std::mutex> lock(deleteLock_);
         cv_.wait(lock, [this] 
         {
             return stopped_.load();
         });
-
-        delete slv_;
-
-        if(perm_)
-        {
-            delete[] total_;
-            delete[] order_;
-            delete[] norder_;
-        }
     }
 }

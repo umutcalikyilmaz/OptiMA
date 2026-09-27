@@ -2,20 +2,16 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/Transporter.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class Traverse : public Transaction
+class Traverse final : public Transaction
 {
-private:
-
-    bool returnJourney_;
-
 public:
 
     Traverse(Agent* agent, bool returnJourney) : Transaction({agent}, 4, 0, {}), returnJourney_(returnJourney) { }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
-        shared_ptr res = make_shared<Memory>();
-        shared_ptr<Memory> operationResult = executeInstruction(getSeizedAgents()[0], &Transporter::traverse);
+        std::shared_ptr res = std::make_shared<Memory>();
+        std::shared_ptr<Memory> operationResult = executeInstruction(getSeizedAgents()[0], &Transporter::traverse);
         
         if(returnJourney_ && get<0>(operationResult->getTuple<bool>(0)))
         {
@@ -31,4 +27,8 @@ public:
 
         return res;
     }
+
+private:
+
+    bool returnJourney_;
 };

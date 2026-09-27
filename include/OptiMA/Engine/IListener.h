@@ -7,9 +7,16 @@ namespace OptiMA
     {
     public:
 
-        virtual void sendTransaction(unique_ptr<ITransaction> txn) = 0;
+        class TransactionFactoryKey
+        {
+        private:
 
-        virtual void trigger() = 0;
+            TransactionFactoryKey() {}
+
+            friend class TransactionFactory;
+        };
+
+        virtual void sendTransaction(TransactionFactoryKey, std::unique_ptr<ITransaction> txn) = 0;
 
         virtual ~IListener() = default;
     };

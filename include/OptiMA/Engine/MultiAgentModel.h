@@ -11,38 +11,6 @@ namespace OptiMA
 {
     class MultiAgentModel
     {
-    private:
-
-        TransactionFactory* tfactory_;
-        Estimator* estimator_;
-        SchedulerSettings* schSettings_;
-        vector<IAgentFactory*> agentFactories_;
-        vector<IPluginInstanceFactory*> instanceFactories_;
-        vector<int> agentCoreIds_;
-        vector<int> pluginIds_;
-        vector<int> initialNumbers_;
-        vector<int> maximumNumbers_;
-        vector<PluginType> pluginTypes_;
-        vector<pair<int,int>> relationships_;
-        vector<pair<int,int>> communications_;
-        vector<pair<int,int>> pluginAccesses_;
-        vector<int> initialAgents_;
-        string keepStatsFilePath_;
-        string defaultEstimatorFilePath_;
-        chrono::milliseconds timeout_ = 1ms;
-        int agentTemplateNumber_;
-        int pluginNumber_;
-        int totalMaxNumber_;
-        int threadNumber_;
-        int batchSize_ = 1;
-        bool schedulerSettingsAdded_;
-        bool estimatorAdded_;
-        bool numCheck_;
-        bool initialAgentsAdded_;
-        bool keepStats_;
-        bool defaultEstimator_;
-        bool tfactorySet_;
-        
     public:
 
         MultiAgentModel();
@@ -59,7 +27,7 @@ namespace OptiMA
             }
 
             agentCoreIds_.push_back(templateId);
-            agentFactories_.push_back(new AgentFactory<A>());
+            agentFactories_.push_back(std::make_unique<AgentFactory<A>>());
             initialNumbers_.push_back(initialNumber);
             maximumNumbers_.push_back(maxNumber);
             totalMaxNumber_ += maxNumber;
@@ -89,7 +57,7 @@ namespace OptiMA
 
             pluginIds_.push_back(pluginId);
             pluginTypes_.push_back(type);
-            instanceFactories_.push_back(new PluginInstanceFactory<P>());
+            instanceFactories_.push_back(std::make_unique<PluginInstanceFactory<P>>());
             pluginNumber_++;
         }
 
@@ -105,14 +73,46 @@ namespace OptiMA
 
         void setBatchSize(int batchSize);
 
-        void setTimeout(chrono::milliseconds timeout);
+        void setTimeout(std::chrono::milliseconds timeout);
 
-        void keepStatsFile(string statsFilePath);
+        void keepStatsFile(std::string statsFilePath);
 
-        void useDefaultEstimator(string statsFilePath);
+        void useDefaultEstimator(std::string statsFilePath);
 
         ~MultiAgentModel();
 
+    private:
+
+        TransactionFactory* tfactory_;
+        Estimator* estimator_;
+        SchedulerSettings* schSettings_;
+        std::vector<std::unique_ptr<IAgentFactory>> agentFactories_;
+        std::vector<std::unique_ptr<IPluginInstanceFactory>> instanceFactories_;
+        std::vector<int> agentCoreIds_;
+        std::vector<int> pluginIds_;
+        std::vector<int> initialNumbers_;
+        std::vector<int> maximumNumbers_;
+        std::vector<PluginType> pluginTypes_;
+        std::vector<std::pair<int,int>> relationships_;
+        std::vector<std::pair<int,int>> communications_;
+        std::vector<std::pair<int,int>> pluginAccesses_;
+        std::vector<int> initialAgents_;
+        std::string keepStatsFilePath_;
+        std::string defaultEstimatorFilePath_;
+        std::chrono::milliseconds timeout_ = std::chrono::milliseconds(1);
+        int agentTemplateNumber_;
+        int pluginNumber_;
+        int totalMaxNumber_;
+        int threadNumber_;
+        int batchSize_ = 1;
+        bool schedulerSettingsAdded_;
+        bool estimatorAdded_;
+        bool numCheck_;
+        bool initialAgentsAdded_;
+        bool keepStats_;
+        bool defaultEstimator_;
+        bool tfactorySet_;
+        
         friend class Driver;
     };
 }

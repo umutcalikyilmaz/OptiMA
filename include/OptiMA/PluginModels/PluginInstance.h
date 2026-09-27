@@ -11,14 +11,27 @@ namespace OptiMA
     {
     public:
 
-        virtual shared_ptr<Memory> operate(shared_ptr<Memory> input) = 0;
-        
-        friend class InstancePool;
-        friend class PluginManager;
+        class AgentKey
+        {
+        private:
 
-    private:
+            AgentKey() {}
+
+            template<class A>
+            friend class AgentTemplate;
+        };
+
+        virtual std::shared_ptr<Memory> operate(AgentKey, std::shared_ptr<Memory> input) = 0;
+
+    protected:
+
+        PluginInstance() { }
+
+    private:        
 
         PluginType type_;
         int pluginId_;
+
+        friend class PluginManager;
     };
 }

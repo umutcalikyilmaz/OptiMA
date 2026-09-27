@@ -4,7 +4,7 @@ namespace OptiMA
 {
     void Driver::startModel(MultiAgentModel& model)
     {
-        startingTime_ = chrono::steady_clock::now().time_since_epoch().count();      
+        startingTime_ = std::chrono::steady_clock::now().time_since_epoch().count();      
 
         if(!model.tfactorySet_)
         {
@@ -19,12 +19,12 @@ namespace OptiMA
         if(model.schedulerSettingsAdded_)
         {
             settingsCreated_ = false;
-            schSettings_ = model.schSettings_;
+            schSettings_ = std::make_unique<SchedulerSettings>(model.schSettings_);
         }
         else
         {
+            schSettings_ = std::make_unique<SchedulerSettings>();
             settingsCreated_ = true;
-            schSettings_ = new SchedulerSettings();
             schSettings_->optimized = false;
         }
 
@@ -40,60 +40,62 @@ namespace OptiMA
             keepStatsFilePath_ = model.keepStatsFilePath_;
         }
 
-        pmanager_ = new PluginManager(model.instanceFactories_, model.pluginTypes_, model.pluginIds_, model.pluginAccesses_);
+        pmanager_ = std::make_unique<PluginManager>(typename PluginManager::DriverKey {}, model.instanceFactories_,
+            model.pluginTypes_, model.pluginIds_, model.pluginAccesses_);
 
-        amanager_ = new AgentManager(model.agentFactories_, model.agentCoreIds_, model.initialNumbers_, model.maximumNumbers_,
-        model.relationships_, model.communications_, model.pluginAccesses_, model.initialAgents_, pmanager_, startingTime_);
-        postmaster_ = amanager_->getPostmaster();
-
-        amanager_->startInitialAgents();
-
+        amanager_ = std::make_unique<AgentManager>(typename AgentManager::DriverKey {}, model.agentFactories_,
+            model.agentCoreIds_, model.initialNumbers_, model.maximumNumbers_, model.relationships_,
+            model.communications_, model.pluginAccesses_, model.initialAgents_, pmanager_.get(), startingTime_);
+            
+        postmaster_ = amanager_->getPostmaster(typename AgentManager::DriverKey {});
+        amanager_->startInitialAgents(typename AgentManager::DriverKey {});
         tfactory_ = model.tfactory_;
         
-        set<int> nonShareablePlugins = pmanager_->getNonShareable();
+        std::set<int> nonShareablePlugins = pmanager_->getNonShareable();
         
-        executor_ = new Executor(this, tfactory_, pmanager_, model.threadNumber_, nonShareablePlugins, schSettings_->optimized,
-        keepStats_);
-
-        if(model.defaultEstimator_)
-        {
-            estimator_ = new DefaultEstimator(model.defaultEstimatorFilePath_);
-        }
-        else
-        {
-            estimator_ = model.estimator_;
-        }        
-
+        executor_ = std::make_unique<Executor>(typename Executor::DriverKey {}, this, tfactory_, pmanager_.get(),
+            model.threadNumber_, nonShareablePlugins, schSettings_->optimized, keepStats_);
+               
         if(schSettings_->optimized)
         {
-            listener_ = new Listener(this, amanager_, pmanager_, postmaster_, estimator_, scheduler_, model.batchSize_, model.timeout_);
+            if(model.defaultEstimator_)
+            {
+                estimator_ = std::make_unique<DefaultEstimator>(model.defaultEstimatorFilePath_);
+            }
 
-            listenerQueue_ = listener_->getTransactionQueue();
-            scheduler_ = new Scheduler(schSettings_, executor_, nonShareablePlugins, model.threadNumber_);
-            scheduler_->insertTransactionQueue(listenerQueue_);
+            scheduler_ = std::make_unique<Scheduler>(typename Scheduler::DriverKey {}, schSettings_.get(),
+                executor_.get(), nonShareablePlugins, model.threadNumber_);
+
+            Estimator* estimatorPtr = model.defaultEstimator_ ? estimator_.get() : model.estimator_;
+            listener_ = std::make_unique<Listener>(typename Listener::DriverKey {}, this, amanager_.get(),
+                pmanager_.get(), postmaster_, estimatorPtr, scheduler_.get(), model.batchSize_, model.timeout_);
+
+            listenerQueue_ = listener_->getTransactionQueue(typename Listener::DriverKey {});
+            scheduler_->insertTransactionQueue(typename Scheduler::DriverKey {}, listenerQueue_);
         }
         else
         {
-            listener_ = new Listener(this, amanager_, pmanager_, postmaster_);
-            listenerQueue_ = listener_->getTransactionQueue();
-            executor_->insertTransactionQueue(listenerQueue_);
+            listener_ = std::make_unique<Listener>(typename Listener::DriverKey {}, this, amanager_.get(),
+                pmanager_.get(), postmaster_);
+            listenerQueue_ = listener_->getTransactionQueue(typename Listener::DriverKey {});
+            executor_->insertTransactionQueue(typename Executor::DriverKey {}, listenerQueue_);
         }
 
-        tfactory_->insertListener((IListener*)listener_);
-        executor_->insertListener((IListener*)listener_);
-        executor_->start();
+        tfactory_->insertListener(typename TransactionFactory::DriverKey {}, (IListener*)listener_.get());
+        executor_->insertListener(typename Executor::DriverKey {}, (IListener*)listener_.get());
+        executor_->start(typename Executor::DriverKey {});
 
         running_ = true;
-        tfactory_->initiate();
+        tfactory_->initiate(typename TransactionFactory::DriverKey {});
 
         if(schSettings_->optimized)
         {
-            scheduler_->startScheduling();
+            scheduler_->startScheduling(typename Scheduler::DriverKey {});
             endProcesses();
         }
         else
         {
-            unique_lock<mutex> lock(mainLock_);
+            std::unique_lock<std::mutex> lock(mainLock_);
             cv_.wait(lock, [this]
             {
                 return !running_.load();
@@ -103,13 +105,13 @@ namespace OptiMA
         }        
     }
 
-    void Driver::haltProgram(shared_ptr<Memory> outputParameters)
+    void Driver::haltProgram(std::shared_ptr<Memory> outputParameters)
     {
         this->outputParameters_ = outputParameters;
         
         if(schSettings_->optimized)
         {
-            delete scheduler_;
+            scheduler_ = nullptr;
             running_ = false;
             cv_.notify_one();
         }
@@ -124,13 +126,13 @@ namespace OptiMA
     void Driver::endProcesses()
     {
         listenerQueue_->exit();
-        executor_->stop();
+        executor_->stop(typename Executor::DriverKey {});
 
         if(keepStats_)
         {
-            auto statsMap = executor_->getStats();
-            fstream file;
-            file.open(keepStatsFilePath_, fstream::out | fstream::trunc);
+            auto statsMap = executor_->getStats(typename Executor::DriverKey {});
+            std::fstream file;
+            file.open(keepStatsFilePath_, std::fstream::out | std::fstream::trunc);
 
             for(auto p1 : statsMap)
             {
@@ -142,7 +144,7 @@ namespace OptiMA
 
             file.close();
         }
-
+        /*
         delete executor_;
         delete listener_;
         
@@ -159,11 +161,12 @@ namespace OptiMA
         {
             delete schSettings_;
         }
+        */
     }
 
-    shared_ptr<Memory> Driver::getOutputParameters()
+    std::shared_ptr<Memory> Driver::getOutputParameters()
     {
-        unique_lock<mutex> lock(mainLock_);
+        std::unique_lock<std::mutex> lock(mainLock_);
         cv_.wait(lock, [this] 
         {
             return !running_.load();

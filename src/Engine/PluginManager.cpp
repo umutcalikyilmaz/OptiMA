@@ -2,8 +2,9 @@
 
 namespace OptiMA
 {
-    PluginManager::PluginManager(vector<IPluginInstanceFactory*>& factories, vector<PluginType> pluginTypes,
-    vector<int> pluginIds, vector<pair<int,int>> pluginAccesses)
+    PluginManager::PluginManager(DriverKey, const std::vector<std::unique_ptr<IPluginInstanceFactory>>& factories,
+        const std::vector<PluginType>& pluginTypes, const std::vector<int>& pluginIds,
+        const std::vector<std::pair<int,int>>& pluginAccesses)
     {
         int c = 0;
 
@@ -13,7 +14,7 @@ namespace OptiMA
             instances_[id]->pluginId_ = id;
             types_[id] = pluginTypes[c];
             statuses_[id] = PluginStatus::FREE;
-            allowedAgentTypes_[id] = vector<int>();
+            allowedAgentTypes_[id] = std::vector<int>();
 
             if(pluginTypes[c] == PluginType::NONSHAREABLE)
             {
@@ -23,15 +24,15 @@ namespace OptiMA
             c++;
         }
 
-        for(pair<int,int> p : pluginAccesses)
+        for(std::pair<int,int> p : pluginAccesses)
         {
             allowedAgentTypes_[p.second].push_back(p.first);
         }
     }
 
-    PluginInstance* PluginManager::seizePlugin(int pluginId, int agentType)
+    PluginInstance* PluginManager::seizePlugin(AgentKey, int pluginId, int agentType)
     {
-        lock_guard<mutex> lock(pluginLock_);
+        std::lock_guard<std::mutex> lock(pluginLock_);
         bool found = false;
 
         for(int at : allowedAgentTypes_[pluginId])
@@ -56,21 +57,21 @@ namespace OptiMA
             }            
             
             statuses_[pluginId] = PluginStatus::SEIZED;
-            return instances_[pluginId];
+            return instances_[pluginId].get();
         }
 
-        return instances_[pluginId];
+        return instances_[pluginId].get();
     }
 
-    void PluginManager::releasePlugin(PluginInstance* instance)
+    void PluginManager::releasePlugin(AgentKey, PluginInstance* instance)
     {
-        lock_guard<mutex> lock(pluginLock_);
+        std::lock_guard<std::mutex> lock(pluginLock_);
         statuses_[instance->pluginId_] = PluginStatus::FREE;
     }
 
-    const set<int> PluginManager::getNonShareable(const set<int>& plugins)
+    const std::set<int> PluginManager::getNonShareable(const std::set<int>& plugins)
     {
-        set<int> res;
+        std::set<int> res;
 
         for(int p : plugins)
         {
@@ -83,16 +84,8 @@ namespace OptiMA
         return res;
     }
 
-    const set<int>& PluginManager::getNonShareable()
+    const std::set<int>& PluginManager::getNonShareable()
     {
         return nonShareable_;
-    }
-
-    PluginManager::~PluginManager()
-    {
-        for(auto p : instances_)
-        {
-            delete p.second;
-        }
     }
 }

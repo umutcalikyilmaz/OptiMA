@@ -2,9 +2,16 @@
 
 namespace OptiMA
 {
-    MultiAgentModel::MultiAgentModel() : agentTemplateNumber_(0), pluginNumber_(0), totalMaxNumber_(0),
-    schedulerSettingsAdded_(false), estimatorAdded_(false), numCheck_(false), initialAgentsAdded_(false),
-    keepStats_(false), tfactorySet_(false) { }
+    MultiAgentModel::MultiAgentModel()
+        : agentTemplateNumber_(0),
+          pluginNumber_(0),
+          totalMaxNumber_(0),
+          schedulerSettingsAdded_(false),
+          estimatorAdded_(false),
+          numCheck_(false),
+          initialAgentsAdded_(false),
+          keepStats_(false),
+          tfactorySet_(false) { }
 
     void MultiAgentModel::addSupervisor(int supervisorTemplateId, int subordinateTemplateId)
     {
@@ -34,8 +41,8 @@ namespace OptiMA
             throw InvalidModelParameterException("Subordinate id does not exist");
         }
 
-        relationships_.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
-        communications_.push_back(make_pair(supervisorTemplateId, subordinateTemplateId));
+        relationships_.push_back(std::make_pair(supervisorTemplateId, subordinateTemplateId));
+        communications_.push_back(std::make_pair(supervisorTemplateId, subordinateTemplateId));
     }
 
     void MultiAgentModel::addCommunication(int templateId1, int templateId2)
@@ -61,7 +68,7 @@ namespace OptiMA
             throw InvalidModelParameterException("One of the template ids does not exist");
         }
 
-        communications_.push_back(make_pair(templateId1, templateId2));
+        communications_.push_back(std::make_pair(templateId1, templateId2));
     }
 
     void MultiAgentModel::setEstimator(Estimator* estimator)
@@ -110,7 +117,7 @@ namespace OptiMA
             throw InvalidModelParameterException("Plugin id does not exist");
         }
 
-        pluginAccesses_.push_back(make_pair(agentTemplateId, pluginId));
+        pluginAccesses_.push_back(std::make_pair(agentTemplateId, pluginId));
     }
 
     void MultiAgentModel::setSchedulerSettings(SchedulerSettings* settings)
@@ -135,18 +142,18 @@ namespace OptiMA
         batchSize_ = batchSize;
     }
 
-    void MultiAgentModel::setTimeout(chrono::milliseconds timeout)
+    void MultiAgentModel::setTimeout(std::chrono::milliseconds timeout)
     {
         timeout_ = timeout;
     }
 
-    void MultiAgentModel::keepStatsFile(string statsFilePath)
+    void MultiAgentModel::keepStatsFile(std::string statsFilePath)
     {
         keepStats_ = true;
         keepStatsFilePath_ = statsFilePath;
     }
 
-    void MultiAgentModel::useDefaultEstimator(string statsFilePath)
+    void MultiAgentModel::useDefaultEstimator(std::string statsFilePath)
     {
         defaultEstimator_ = true;
         estimatorAdded_ = true;

@@ -9,18 +9,15 @@
 
 using namespace OptiMA;
 
-class AssemblyQueue : public Plugin<AssemblyQueue>
-{
-    queue<unique_ptr<Job>> jobQueue_;
-    mutex queueLock_;
-    
+class AssemblyQueue final : public Plugin<AssemblyQueue>
+{ 
 public:
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
         if(inputParameters == nullptr)
         {
-            lock_guard<mutex> lock(queueLock_);
+            std::lock_guard<std::mutex> lock(queueLock_);
     
             if(jobQueue_.empty())
             {
@@ -29,25 +26,30 @@ public:
                 return nullptr;
             }
         
-            auto res = make_shared<Memory>();
-            res->addTuple(move(jobQueue_.front()));
+            auto res = std::make_shared<Memory>();
+            res->addTuple(std::move(jobQueue_.front()));
             jobQueue_.pop();
             started++;
             return res;
         }    
         else
         {
-            shared_ptr<vector<unique_ptr<Job>>> jobVec = get<0>(inputParameters->getTuple<shared_ptr<vector<unique_ptr<Job>>>>(0));
+            std::shared_ptr<std::vector<std::unique_ptr<Job>>> jobVec = std::get<0>(inputParameters->getTuple<std::shared_ptr<std::vector<std::unique_ptr<Job>>>>(0));
             int count = jobVec->size();
 
-            lock_guard<mutex> lock(queueLock_);
+            std::lock_guard<std::mutex> lock(queueLock_);
 
             for(int i = 0; i < count; i++)
             {
-                jobQueue_.push(move((*jobVec)[i]));
+                jobQueue_.push(std::move((*jobVec)[i]));
             }
             
             return nullptr;        
         }
     }
+
+private:
+
+    std::queue<std::unique_ptr<Job>> jobQueue_;
+    std::mutex queueLock_;
 };

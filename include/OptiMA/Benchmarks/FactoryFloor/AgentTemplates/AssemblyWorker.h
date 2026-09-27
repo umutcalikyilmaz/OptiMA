@@ -8,20 +8,127 @@
 
 using namespace OptiMA;
 
-class AssemblyWorker : public AgentTemplate<AssemblyWorker>
+class AssemblyWorker final : public AgentTemplate<AssemblyWorker>
 {
+public:
+
+    AssemblyWorker()
+        : probabilityRnd_(0, 1, randomNumberSeed),
+          currentJob_(nullptr)
+    {
+        for(int i = 0; i < 5; i++)
+        {
+            manualRandoms_[i] = std::make_unique<NormalRandom>(assemblyManualOperationMeans[i] * simulationTimeScale,
+                assemblyManualOperationStds[i] * simulationTimeScale, randomNumberSeed * (i + 1));
+        }
+    }
+
+    std::shared_ptr<Memory> selfStop()
+    {
+        return stopAgent(getAgentId());
+    }
+
+    std::shared_ptr<Memory> retrieveJob()
+    {
+        std::shared_ptr<Memory> operationResult = operatePlugin(0, nullptr);
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
+
+        if(operationResult == nullptr)
+        {
+            res->addTuple(false);
+        }
+        else
+        {
+            currentJob_ = std::move(std::get<0>(operationResult->getTuple<std::unique_ptr<Job>>(0)));
+
+            auto operation = currentJob_->operationTypes.front();
+            currentJob_->operationTypes.pop();
+
+            std::set<int> requestedPlugins = getRequestedPlugins(operation);
+            int subtype = getSubtype(operation);
+            res->addTuple(true);
+            res->addTuple(subtype, operation, requestedPlugins);
+        }
+        
+        return res;
+    }
+
+    std::shared_ptr<Memory> operate(std::vector<std::pair<OperationType, int>> description)
+    {
+        for(std::pair<OperationType, int> p : description)
+        {
+            auto input = generateMemory();
+            int duration;
+
+            switch(p.first)
+            {
+            case MANUAL:
+                duration = (int)manualRandoms_[p.second]->generate();
+                std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+                break;
+
+            case DRILLING:
+                input->addTuple(p.second);
+                operatePlugin(2, input);
+                break;
+
+            case WELDING:
+                input->addTuple(p.second);
+                operatePlugin(5, input);
+                break;
+            }
+        }
+
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
+
+        if(currentJob_->operationTypes.empty())
+        {
+            res->addTuple(false);
+        }
+        else
+        {
+            auto operation = currentJob_->operationTypes.front();
+            currentJob_->operationTypes.pop();
+
+            std::set<int> requestedPlugins = getRequestedPlugins(operation);
+            int subtype = getSubtype(operation);
+            res->addTuple(true);
+            res->addTuple(subtype, operation, requestedPlugins);
+            
+        }
+        
+        return res;
+    }
+
+    std::shared_ptr<Memory> placeOnConveyorBelt()
+    {
+        auto input = generateMemory();
+        input->addTuple(false);
+        input->addTuple(move(currentJob_));
+        operatePlugin(1, input);
+
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
+
+        auto msgs = checkMessages();
+        res->addTuple(!msgs.empty());
+
+        return res;
+    }
+
+    void clearMemory() override { }
+
 private:
 
-    unique_ptr<Job> currentJob_;
-    NormalRandom* manualRandoms_[5];
+    std::unique_ptr<Job> currentJob_;
+    std::unique_ptr<NormalRandom> manualRandoms_[5];
     UniformRandom probabilityRnd_;
     double timeScale_;
 
-    set<int> getRequestedPlugins(vector<pair<OperationType, int>> description)
+    std::set<int> getRequestedPlugins(std::vector<std::pair<OperationType, int>> description)
     {
-        set<int> res;
+        std::set<int> res;
 
-        for(pair<OperationType, int> p : description)
+        for(std::pair<OperationType, int> p : description)
         {
             switch(p.first)
             {
@@ -38,12 +145,12 @@ private:
         return res;
     }
 
-    int getSubtype(vector<pair<OperationType, int>> description)
+    int getSubtype(std::vector<std::pair<OperationType, int>> description)
     {
         int digit = 1;
         int res = 0;
 
-        for(pair<OperationType, int> p : description)
+        for(std::pair<OperationType, int> p : description)
         {
             switch(p.first)
             {
@@ -64,118 +171,5 @@ private:
         }
 
         return res;
-    }
-
-public:
-
-    AssemblyWorker() : probabilityRnd_(0, 1, randomNumberSeed), currentJob_(nullptr)
-    {
-        for(int i = 0; i < 5; i++)
-        {
-            manualRandoms_[i] = new NormalRandom(assemblyManualOperationMeans[i] * simulationTimeScale, assemblyManualOperationStds[i]
-            * simulationTimeScale, randomNumberSeed * (i + 1));
-        }
-    }
-
-    shared_ptr<Memory> selfStop()
-    {
-        return stopAgent(getAgentId());
-    }
-
-    shared_ptr<Memory> retrieveJob()
-    {
-        shared_ptr<Memory> operationResult = operatePlugin(0, nullptr);
-        shared_ptr<Memory> res = make_shared<Memory>();
-
-        if(operationResult == nullptr)
-        {
-            res->addTuple(false);
-        }
-        else
-        {
-            currentJob_ = move(get<0>(operationResult->getTuple<unique_ptr<Job>>(0)));
-
-            auto operation = currentJob_->operationTypes.front();
-            currentJob_->operationTypes.pop();
-
-            set<int> requestedPlugins = getRequestedPlugins(operation);
-            int subtype = getSubtype(operation);
-            res->addTuple(true);
-            res->addTuple(subtype, operation, requestedPlugins);
-        }
-        
-        return res;
-    }
-
-    shared_ptr<Memory> operate(vector<pair<OperationType, int>> description)
-    {
-        for(pair<OperationType, int> p : description)
-        {
-            auto input = generateMemory();
-            int duration;
-
-            switch(p.first)
-            {
-            case MANUAL:
-                duration = (int)manualRandoms_[p.second]->generate();
-                this_thread::sleep_for(chrono::milliseconds(duration));
-                break;
-
-            case DRILLING:
-                input->addTuple(p.second);
-                operatePlugin(2, input);
-                break;
-
-            case WELDING:
-                input->addTuple(p.second);
-                operatePlugin(5, input);
-                break;
-            }
-        }
-
-        shared_ptr<Memory> res = make_shared<Memory>();
-
-        if(currentJob_->operationTypes.empty())
-        {
-            res->addTuple(false);
-        }
-        else
-        {
-            auto operation = currentJob_->operationTypes.front();
-            currentJob_->operationTypes.pop();
-
-            set<int> requestedPlugins = getRequestedPlugins(operation);
-            int subtype = getSubtype(operation);
-            res->addTuple(true);
-            res->addTuple(subtype, operation, requestedPlugins);
-            
-        }
-        
-        return res;
-    }
-
-    shared_ptr<Memory> placeOnConveyorBelt()
-    {
-        auto input = generateMemory();
-        input->addTuple(false);
-        input->addTuple(move(currentJob_));
-        operatePlugin(1, input);
-
-        shared_ptr<Memory> res = make_shared<Memory>();
-
-        auto msgs = checkMessages();
-        res->addTuple(!msgs.empty());
-
-        return res;
-    }
-
-    void clearMemory() override { }
-
-    ~AssemblyWorker()
-    {
-        for(int i = 0; i < 5; i++)
-        {
-            delete manualRandoms_[i];
-        }
     }
 };

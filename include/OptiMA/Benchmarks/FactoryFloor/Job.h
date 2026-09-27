@@ -10,7 +10,7 @@ enum OperationType
 
 struct Job
 {
-    queue<vector<pair<OperationType,int>>> operationTypes;
+    std::queue<std::vector<std::pair<OperationType,int>>> operationTypes;
     bool isSuccessful;
     int id;
 };

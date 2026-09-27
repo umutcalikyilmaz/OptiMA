@@ -10,21 +10,15 @@
 
 using namespace OptiMA;
 
-class InspectionQueue : public Plugin<InspectionQueue>
+class InspectionQueue final : public Plugin<InspectionQueue>
 {
-private:
-
-    NormalRandom pickUpRandom_;
-    NormalRandom placeRandom_;
-    queue<unique_ptr<Job>> jobQueue_;
-    mutex queueLock_;
-
 public:
 
-    InspectionQueue() : pickUpRandom_(inspectionQueuePickUpMean * simulationTimeScale, inspectionQueuePickUpStd * simulationTimeScale),
-    placeRandom_(inspectionQueuePlaceMean * simulationTimeScale, inspectionQueuePlaceStd * simulationTimeScale, randomNumberSeed) { }
+    InspectionQueue()
+        : pickUpRandom_(inspectionQueuePickUpMean * simulationTimeScale, inspectionQueuePickUpStd * simulationTimeScale),
+          placeRandom_(inspectionQueuePlaceMean * simulationTimeScale, inspectionQueuePlaceStd * simulationTimeScale, randomNumberSeed) { }
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
         if(inputParameters == nullptr)
         {
@@ -36,26 +30,26 @@ public:
                 return nullptr;
             }
 
-            auto job = move(jobQueue_.front());
+            auto job = std::move(jobQueue_.front());
             jobQueue_.pop();
             queueLock_.unlock();
 
             int duration = (int)pickUpRandom_.generate();
-            this_thread::sleep_for(chrono::milliseconds(duration));
+            std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 
-            auto res = make_shared<Memory>();
+            auto res = std::make_shared<Memory>();
             res->addTuple(move(job));           
             return res;            
         }
         else
         {
-            bool type = get<0>(inputParameters->getTuple<bool>(0));
+            bool type = std::get<0>(inputParameters->getTuple<bool>(0));
     
             if(type)
             {
                 auto res = generateMemory();
     
-                lock_guard<mutex> lock(queueLock_);
+                std::lock_guard<std::mutex> lock(queueLock_);
                 int count = jobQueue_.size();
                 res->addTuple(count);
                 return res;
@@ -63,14 +57,20 @@ public:
             else
             {
                 int duration = (int)placeRandom_.generate();
-                this_thread::sleep_for(chrono::milliseconds(duration));
+                std::this_thread::sleep_for(std::chrono::milliseconds(duration));
     
-                lock_guard<mutex> lock(queueLock_);                
-                jobQueue_.push(move(get<0>(inputParameters->getTuple<unique_ptr<Job>>(1))));
+                std::lock_guard<std::mutex> lock(queueLock_);                
+                jobQueue_.push(std::move(std::get<0>(inputParameters->getTuple<std::unique_ptr<Job>>(1))));
     
                 return nullptr;
-            }
-            
+            }            
         }
     }
+
+private:
+
+    NormalRandom pickUpRandom_;
+    NormalRandom placeRandom_;
+    std::queue<std::unique_ptr<Job>> jobQueue_;
+    std::mutex queueLock_;
 };

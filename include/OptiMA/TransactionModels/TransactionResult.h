@@ -5,7 +5,7 @@ namespace OptiMA
 {
     struct TransactionResult : public Message
     {
-        shared_ptr<Memory> resultParameters;
+        std::shared_ptr<Memory> resultParameters;
         const char* errorMessage;
         TransactionStatus status;
 
@@ -13,7 +13,7 @@ namespace OptiMA
 
         TransactionResult(TransactionStatus status, const char* errorMessage);
 
-        TransactionResult(TransactionStatus status, shared_ptr<Memory>  resultParameters);
+        TransactionResult(TransactionStatus status, std::shared_ptr<Memory> resultParameters);
     };
     
 }

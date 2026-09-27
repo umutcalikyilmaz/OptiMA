@@ -15,62 +15,82 @@ namespace OptiMA
     {
     public:
 
-        Agent();
+        class ManagerKey
+        {
+        private:
 
-        void start();
+            ManagerKey() {}
 
-        void stop();
+            friend class AgentManager;
+        };
 
-        void setAgentId(int agentId);
+        class PoolKey
+        {
+        private:
+            
+            PoolKey() {}
 
-        void setAgentType(int agentType);
+            friend class AgentPool;
+        };
 
-        void setCurrentTransaction(long transactionId);
+        void start(ManagerKey);
 
-        void setAgentManager(IAgentManager* amanger);
+        void stop(ManagerKey);
 
-        void setPluginManager(PluginManager* pmanager);
+        void setAgentId(ManagerKey, int agentId);        
 
-        void setPostmaster(Postmaster* postmaster);
+        void setCurrentTransaction(ManagerKey, long transactionId);
 
-        void setSupervisors(vector<int>& supervisors);
+        AgentStatus getStatus(ManagerKey);
 
-        void setSubordinates(vector<int>& subordinates);
+        PostBox* getPostBoxAddress(ManagerKey);
 
-        void setCommunications(vector<int>& contacts);
+        void setAgentType(PoolKey, int agentType);
 
-        void setTools(vector<int>& tools);    
+        void setCurrentTransaction(PoolKey);
 
-        AgentStatus getStatus();
+        void setAgentManager(PoolKey, IAgentManager* amanger);
+
+        void setPluginManager(PoolKey, PluginManager* pmanager);
+
+        void setPostmaster(PoolKey, Postmaster* postmaster);
+
+        void setSupervisors(PoolKey, const std::vector<int>& supervisors);
+
+        void setSubordinates(PoolKey, const std::vector<int>& subordinates);
+
+        void setCommunications(PoolKey, const std::vector<int>& contacts);
+
+        void setTools(PoolKey, const std::vector<int>& tools);    
+
+        void clearMemory(PoolKey);
 
         int getAgentId();
 
-        int getAgentType();
+        //int getAgentType();
 
-        long getCurrentTransaction();
+        //long getCurrentTransaction();
 
-        PostBox* getPostBoxAddress();
-
-        virtual void clearMemory() = 0;
-        
-        virtual ~Agent();
-
-        friend class AgentManager;
+        virtual ~Agent() = default;
 
     protected:
 
         IAgentManager* amanager_;        
         PluginManager* pmanager_;
         Postmaster* postmaster_;
-        PostBox* postBox_;        
-        vector<int> supervisors_;
-        vector<int> subordinates_;
-        vector<int> contacts_;
-        vector<int> allowedPlugins_;
+        std::unique_ptr<PostBox> postBox_;        
+        std::vector<int> supervisors_;
+        std::vector<int> subordinates_;
+        std::vector<int> contacts_;
+        std::vector<int> allowedPlugins_;
         long currentTransaction_;
         int agentId_;
         int agentType_;
         AgentStatus status_;        
-        bool started_;        
+        bool started_;
+        
+        Agent();
+
+        virtual void clearMemory() = 0;
     };
 }

@@ -11,37 +11,66 @@ namespace OptiMA
     {        
     public:
 
-        Postmaster(map<int,vector<int>>& agentIds, map<int,
-        vector<int>>& communicators, int startingTime);
+        class AgentManagerKey
+        {
+        private:
 
-        void addAgent(int agentId, int agentType, PostBox* postbox);
+            AgentManagerKey() {}
 
-        void removeAgent(int agentId, int agentType);
+            friend class AgentManager;
+        };
 
-        void sendToId(long transactionId, int senderId, int senderType, int receiverId, shared_ptr<Message>  msg);
+        class AgentKey
+        {
+        private:
+            
+            AgentKey() {}
 
-        void sendToType(long transactionId, int senderId, int senderType, int receiverType, shared_ptr<Message> msg);
+            template<class A>
+            friend class AgentTemplate;
+        };
 
-        void commit(long transactionId);
+        class TransactionKey
+        {
+            TransactionKey() {}
 
-        void rollback(long transactionId);
+            friend class Transaction;
+        };
+
+        Postmaster(AgentManagerKey, std::map<int,std::vector<int>>& agentIds, std::map<int,
+            std::vector<int>>& communicators,  int startingTime);
+
+        void addAgent(AgentManagerKey, int agentId, int agentType, PostBox* postbox);
+
+        //void removeAgent(int agentId, int agentType);
+
+        void sendToId(AgentKey, long transactionId, int senderId, int senderType, int receiverId,
+            std::shared_ptr<Message> msg);
+
+        void sendToType(AgentKey, long transactionId, int senderId, int senderType, int receiverType,
+            std::shared_ptr<Message> msg);
+
+        void commit(TransactionKey, long transactionId);
+
+        void rollback(TransactionKey, long transactionId);
 
         ~Postmaster();
 
     private:
 
-        map<int,pair<PostBox*,int>> postBoxes_;
-        map<int,vector<int>> communicators_;
-        map<int,vector<int>> agentIds_;
-        map<long,vector<pair<shared_ptr<Message>, PostBox*>>> transactionLog_;
+        std::map<int,std::pair<PostBox*,int>> postBoxes_;
+        std::map<int,std::vector<int>> communicators_;
+        std::map<int,std::vector<int>> agentIds_;
+        std::map<long,std::vector<std::pair<std::shared_ptr<Message>, PostBox*>>> transactionLog_;
         long startingTime_;
-        mutex postLock_;
-        mutex logLock_;        
+        std::mutex postLock_;
+        std::mutex logLock_;        
 
         bool checkSender(int receiverType, int senderType);
 
-        void enterLog(long transactionId, int senderId, int senderType, int receiverId, int receiverType, shared_ptr<Message> msg, PostBox* box);
+        void enterLog(long transactionId, int senderId, int senderType, int receiverId, int receiverType,
+            std::shared_ptr<Message> msg, PostBox* box);
 
-        void send(shared_ptr<Message> msg, PostBox* postbox);
+        void send(std::shared_ptr<Message> msg, PostBox* postbox);
     };
 }

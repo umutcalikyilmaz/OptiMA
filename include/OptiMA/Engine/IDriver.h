@@ -7,7 +7,7 @@ namespace OptiMA
     {
     public:
 
-        virtual void haltProgram(shared_ptr<Memory> outputParameters) = 0;
+        virtual void haltProgram(std::shared_ptr<Memory> outputParameters) = 0;
 
         virtual ~IDriver() = default;
     };

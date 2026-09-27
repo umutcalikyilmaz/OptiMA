@@ -8,23 +8,27 @@
 
 using namespace OptiMA;
 
-class QAScanner : public Plugin<QAScanner>
+class QAScanner final : public Plugin<QAScanner>
 {
-    NormalRandom scanRandom_;
-    UniformRandom probabilityRandom_;
-    double successProbability = 0.9;
-
 public:
-    QAScanner() : scanRandom_(qaScannerOperationMean * simulationTimeScale, qaScannerOperationStd * simulationTimeScale, randomNumberSeed),
-    probabilityRandom_(0, 1) { }
 
-    shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters) override
+    QAScanner()
+        : scanRandom_(qaScannerOperationMean * simulationTimeScale, qaScannerOperationStd * simulationTimeScale, randomNumberSeed),
+          probabilityRandom_(0, 1) { }
+
+    std::shared_ptr<Memory> operate(std::shared_ptr<Memory> inputParameters)
     {
         int duration = (int)scanRandom_.generate();
-        this_thread::sleep_for(chrono::milliseconds(duration));
+        std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 
-        shared_ptr<Memory> res = make_shared<Memory>();
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
         res->addTuple(probabilityRandom_.generate() < successProbability);
         return res;
     }
+
+private:
+
+    NormalRandom scanRandom_;
+    UniformRandom probabilityRandom_;
+    double successProbability = 0.9;
 };

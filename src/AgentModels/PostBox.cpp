@@ -2,15 +2,15 @@
 
 namespace OptiMA
 {
-    void PostBox::sendMessage(shared_ptr<Message> msg)
+    void PostBox::sendMessage(PostmasterKey, std::shared_ptr<Message> msg)
     {
         messages_.push(msg);
     }
 
-    queue<shared_ptr<Message>> PostBox::checkMessages()
+    std::queue<std::shared_ptr<Message>> PostBox::checkMessages(AgentKey)
     {        
-        queue<shared_ptr<Message>> res;
-        lock_guard<mutex> lock(postLock_);
+        std::queue<std::shared_ptr<Message>> res;
+        std::lock_guard<std::mutex> lock(postLock_);
 
         while(!messages_.empty())
         {
@@ -19,13 +19,5 @@ namespace OptiMA
         }
 
         return res;
-    }
-
-    PostBox::~PostBox()
-    {
-        while(!messages_.empty())
-        {
-            messages_.pop();
-        }
     }
 }

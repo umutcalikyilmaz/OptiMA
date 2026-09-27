@@ -9,8 +9,6 @@
 #include <utility>
 #include <vector>
 
-using namespace std;
-
 namespace OptiMA
 {
     enum class AgentOperationType : uint8_t

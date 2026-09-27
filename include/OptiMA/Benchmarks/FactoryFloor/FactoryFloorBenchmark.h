@@ -18,54 +18,27 @@ using namespace OptiMA;
 
 class FactoryFloorBenchmark
 {
-private:
-
-    Driver* drv_;
-    MultiAgentModel* mam_;
-    SchedulerSettings* schedulerSettings_;
-    vector<double> manualOperationCoefs_;
-    vector<double> drillingOperationCoefs_;
-    vector<double> weldingOperationCoefs_;
-    string jobFilePath_;
-    string estimatorFilePath_;
-    string statsFilePath_;
-    chrono::milliseconds timeout_;
-    mutex timerLock_;
-    condition_variable wakingCondition_;
-    double manualOperationCoef_;
-    double drillingCoef_;
-    double weldingCoef_;
-    double beg_;
-    double end_;
-    int minimumTransactionNumber_;
-    int maximumTransactionNumber_;
-    int minimumOperationNumber_;
-    int maximumOperationNumber_;
-    int initialAssemblyWorkerNumber_;
-    int initialTransporterNumber_;
-    int initialInspectorNumber_;
-    int threadNumber_;
-    int timeStep_;
-    int batchSize_;
-    int begCount_;
-    int begCount2_;
-    int endCount_;
-    int endCount2_;
-    bool useExisting_;
-    bool saveJobs_;
-    bool schedulerInitialized_;
-    bool estimatorFileSet_;
-    bool batchSizeSet_;
-    bool timeoutSet_;
-    bool threadNumSet_;
-    bool keepStats_;    
-
 public:
 
-    FactoryFloorBenchmark(): manualOperationCoef_(1), drillingCoef_(1), weldingCoef_(1), manualOperationCoefs_({1, 1, 1, 1, 1}),
-    drillingOperationCoefs_({1, 1}), weldingOperationCoefs_({1, 1}), minimumTransactionNumber_(1), maximumTransactionNumber_(4),
-    minimumOperationNumber_(1), maximumOperationNumber_(2), saveJobs_(false), useExisting_(false), schedulerInitialized_(false),
-    estimatorFileSet_(false), threadNumSet_(false), batchSizeSet_(false), timeoutSet_(false), keepStats_(false)
+    FactoryFloorBenchmark()
+        : manualOperationCoef_(1),
+          drillingCoef_(1),
+          weldingCoef_(1),
+          manualOperationCoefs_({1, 1, 1, 1, 1}),
+          drillingOperationCoefs_({1, 1}),
+          weldingOperationCoefs_({1, 1}),
+          minimumTransactionNumber_(1),
+          maximumTransactionNumber_(4),
+          minimumOperationNumber_(1),
+          maximumOperationNumber_(2),
+          saveJobs_(false),
+          useExisting_(false),
+          schedulerInitialized_(false),
+          estimatorFileSet_(false),
+          threadNumSet_(false),
+          batchSizeSet_(false),
+          timeoutSet_(false),
+          keepStats_(false)
     {
         simulationTimeScale = 1;
         totalJobNumber = 100;
@@ -110,21 +83,21 @@ public:
         manualOperationCoefs_[4] = coefficient5;
     }
 
-    void saveJobs(string filePath)
+    void saveJobs(std::string filePath)
     {
         saveJobs_ = true;
         useExisting_ = false;
         jobFilePath_ = filePath;
     }
 
-    void useExistingJobs(string filePath)
+    void useExistingJobs(std::string filePath)
     {
         saveJobs_ = false;
         useExisting_ = true;
         jobFilePath_ = filePath;
     }
 
-    void setEstimatorFile(string filePath)
+    void setEstimatorFile(std::string filePath)
     {
         estimatorFileSet_ = true;
         keepStats_ = false;
@@ -167,13 +140,13 @@ public:
         batchSizeSet_ = true;
     }
 
-    void setTimeout(chrono::milliseconds timeout)
+    void setTimeout(std::chrono::milliseconds timeout)
     {
         timeout_ = timeout;
         timeoutSet_ = true;
     }
 
-    void keepStats(string filePath)
+    void keepStats(std::string filePath)
     {
         keepStats_ = true;
         estimatorFileSet_ = false;
@@ -185,28 +158,28 @@ public:
         randomNumberSeed = seed;
     }
 
-    void keepTime(chrono::milliseconds duration)
+    void keepTime(std::chrono::milliseconds duration)
     {
         {
-            unique_lock<mutex> lock(timerLock_);
+            std::unique_lock<std::mutex> lock(timerLock_);
             warmupCondition.wait(lock, [this]
             {
                 return warmedUp.load();
             });
     
-            beg_ = chrono::steady_clock::now().time_since_epoch().count();
+            beg_ = std::chrono::steady_clock::now().time_since_epoch().count();
             begCount_ = started;
             begCount2_ = completed;
         }
         
 
-        unique_lock<mutex> lock(timerLock_);
+        std::unique_lock<std::mutex> lock(timerLock_);
         cooldownCondition.wait(lock, [this]
         {
             return cooledDown.load();
         });
 
-        end_ = chrono::steady_clock::now().time_since_epoch().count();
+        end_ = std::chrono::steady_clock::now().time_since_epoch().count();
         endCount_ = started;
         endCount2_ = completed;
         drv_->haltProgram(nullptr);
@@ -214,9 +187,9 @@ public:
 
     double StartBenchmark()
     {
-        JobCreator* jc;
-        mam_ = new MultiAgentModel();
-        drv_ = new Driver();
+        std::unique_ptr<JobCreator> jc;
+        MultiAgentModel mam;
+        drv_ = std::make_unique<Driver>();
         warmedUp = false;
         cooledDown = false;
         begCount_ = 0;
@@ -226,30 +199,31 @@ public:
     
         if(useExisting_)
         {
-            jc = new JobCreator(jobFilePath_);
+            jc = std::make_unique<JobCreator>(jobFilePath_);
         }
         else
         {
             if(saveJobs_)
             {
-                jc = new JobCreator(totalJobNumber, minimumTransactionNumber_, maximumTransactionNumber_,  minimumOperationNumber_,
-                maximumOperationNumber_, manualOperationCoef_, drillingCoef_, weldingCoef_, manualOperationCoefs_, drillingOperationCoefs_,
-                weldingOperationCoefs_, jobFilePath_);
+                jc = std::make_unique<JobCreator>(totalJobNumber, minimumTransactionNumber_,
+                    maximumTransactionNumber_,  minimumOperationNumber_, maximumOperationNumber_, 
+                    manualOperationCoef_, drillingCoef_, weldingCoef_, manualOperationCoefs_,
+                    drillingOperationCoefs_, weldingOperationCoefs_, jobFilePath_);
             }
             else
             {
-                jc = new JobCreator(totalJobNumber, minimumTransactionNumber_, maximumTransactionNumber_, minimumOperationNumber_,
-                maximumOperationNumber_, manualOperationCoef_, drillingCoef_, weldingCoef_, manualOperationCoefs_, drillingOperationCoefs_,
-                weldingOperationCoefs_);
+                jc = std::make_unique<JobCreator>(totalJobNumber, minimumTransactionNumber_,
+                    maximumTransactionNumber_, minimumOperationNumber_, maximumOperationNumber_,
+                    manualOperationCoef_, drillingCoef_, weldingCoef_, manualOperationCoefs_,
+                    drillingOperationCoefs_, weldingOperationCoefs_);
             }
         }
     
         jobs = jc->createJobs();
-        delete jc;
     
         if(threadNumSet_)
         {
-            mam_->setThreadNumber(threadNumber_);
+            mam.setThreadNumber(threadNumber_);
         }
         else
         {
@@ -258,7 +232,7 @@ public:
     
         if(batchSizeSet_)
         {
-            mam_->setBatchSize(batchSize_);
+            mam.setBatchSize(batchSize_);
         }        
     
         if(schedulerInitialized_)
@@ -273,70 +247,109 @@ public:
                 throw InvalidModelParameterException((char*)"Batch size and timeout must be set for optimized execution");
             }
     
-            mam_->setSchedulerSettings(schedulerSettings_);
+            mam.setSchedulerSettings(schedulerSettings_);
         }
         
         if(schedulerSettings_->optimized)
         {
-            mam_->setBatchSize(batchSize_);
-            mam_->setTimeout(timeout_);
+            mam.setBatchSize(batchSize_);
+            mam.setTimeout(timeout_);
         }
     
         if(keepStats_)
         {
-            mam_->keepStatsFile(statsFilePath_);
+            mam.keepStatsFile(statsFilePath_);
         }
     
-        mam_->useDefaultEstimator(estimatorFilePath_);
-        mam_->addAgentTemplate<FloorManager>(3, 1, 1, true);
-        mam_->addAgentTemplate<AssemblyWorker>(0, initialAssemblyWorkerNumber_, maximumAssemblyWorker, true);
-        mam_->addAgentTemplate<Transporter>(1, initialTransporterNumber_, maximumTransporter, true);
-        mam_->addAgentTemplate<Inspector>(2, initialInspectorNumber_, maximumInspector, true);        
+        mam.useDefaultEstimator(estimatorFilePath_);
+        mam.addAgentTemplate<FloorManager>(3, 1, 1, true);
+        mam.addAgentTemplate<AssemblyWorker>(0, initialAssemblyWorkerNumber_, maximumAssemblyWorker, true);
+        mam.addAgentTemplate<Transporter>(1, initialTransporterNumber_, maximumTransporter, true);
+        mam.addAgentTemplate<Inspector>(2, initialInspectorNumber_, maximumInspector, true);        
     
-        mam_->addPlugin<AssemblyQueue>(0, PluginType::SHAREABLE);
-        mam_->addPlugin<ConveyorBelt>(1, PluginType::SHAREABLE);
-        mam_->addPlugin<DrillPress>(2, PluginType::NONSHAREABLE);
-        mam_->addPlugin<InspectionQueue>(3, PluginType::SHAREABLE);
-        mam_->addPlugin<QAScanner>(4, PluginType::NONSHAREABLE);
-        mam_->addPlugin<WeldingStation>(5, PluginType::NONSHAREABLE);
-        mam_->addPlugin<OutputBin>(6, PluginType::SHAREABLE);
+        mam.addPlugin<AssemblyQueue>(0, PluginType::SHAREABLE);
+        mam.addPlugin<ConveyorBelt>(1, PluginType::SHAREABLE);
+        mam.addPlugin<DrillPress>(2, PluginType::NONSHAREABLE);
+        mam.addPlugin<InspectionQueue>(3, PluginType::SHAREABLE);
+        mam.addPlugin<QAScanner>(4, PluginType::NONSHAREABLE);
+        mam.addPlugin<WeldingStation>(5, PluginType::NONSHAREABLE);
+        mam.addPlugin<OutputBin>(6, PluginType::SHAREABLE);
            
-        mam_->addSupervisor(3, 0);        
-        mam_->addSupervisor(3, 1);
-        mam_->addSupervisor(3, 2);
-        mam_->addCommunication(3, 0);
-        mam_->addCommunication(3, 1);
-        mam_->addCommunication(3, 2);
+        mam.addSupervisor(3, 0);        
+        mam.addSupervisor(3, 1);
+        mam.addSupervisor(3, 2);
+        mam.addCommunication(3, 0);
+        mam.addCommunication(3, 1);
+        mam.addCommunication(3, 2);
         
-        mam_->allowPluginUse(0, 0);
-        mam_->allowPluginUse(0, 1);
-        mam_->allowPluginUse(0, 2);
-        mam_->allowPluginUse(0, 5);
+        mam.allowPluginUse(0, 0);
+        mam.allowPluginUse(0, 1);
+        mam.allowPluginUse(0, 2);
+        mam.allowPluginUse(0, 5);
         
-        mam_->allowPluginUse(1, 1);
-        mam_->allowPluginUse(1, 3);
+        mam.allowPluginUse(1, 1);
+        mam.allowPluginUse(1, 3);
         
-        mam_->allowPluginUse(2, 3);
-        mam_->allowPluginUse(2, 4);
-        mam_->allowPluginUse(2, 6);
+        mam.allowPluginUse(2, 3);
+        mam.allowPluginUse(2, 4);
+        mam.allowPluginUse(2, 6);
         
-        mam_->allowPluginUse(3, 0);
-        mam_->allowPluginUse(3, 1);
-        mam_->allowPluginUse(3, 3);
+        mam.allowPluginUse(3, 0);
+        mam.allowPluginUse(3, 1);
+        mam.allowPluginUse(3, 3);
         
         FactoryFloorTransactionFactory tf(initialAssemblyWorkerNumber_, initialTransporterNumber_, initialInspectorNumber_);
-        mam_->setTransactionFactory(&tf);
+        mam.setTransactionFactory(&tf);
         
-        double beg = chrono::steady_clock::now().time_since_epoch().count();
-        thread timerThread(&FactoryFloorBenchmark::keepTime, this, chrono::milliseconds((int)(15000 * simulationTimeScale * totalJobNumber)));
-        drv_->startModel(*mam_);        
-        double end = chrono::steady_clock::now().time_since_epoch().count();
+        double beg = std::chrono::steady_clock::now().time_since_epoch().count();
+        std::thread timerThread(&FactoryFloorBenchmark::keepTime, this, std::chrono::milliseconds((int)(15000 * simulationTimeScale * totalJobNumber)));
+        drv_->startModel(mam);
+        double end = std::chrono::steady_clock::now().time_since_epoch().count();
 
         wakingCondition_.notify_one();
         timerThread.join();
 
-        delete mam_;
-        delete drv_;
         return (double)(endCount2_ - begCount_) / ((end_ - beg_) / 1000000000);      
     }
+
+private:
+
+    std::unique_ptr<Driver> drv_;
+    SchedulerSettings* schedulerSettings_;
+    std::vector<double> manualOperationCoefs_;
+    std::vector<double> drillingOperationCoefs_;
+    std::vector<double> weldingOperationCoefs_;
+    std::string jobFilePath_;
+    std::string estimatorFilePath_;
+    std::string statsFilePath_;
+    std::chrono::milliseconds timeout_;
+    std::mutex timerLock_;
+    std::condition_variable wakingCondition_;
+    double manualOperationCoef_;
+    double drillingCoef_;
+    double weldingCoef_;
+    double beg_;
+    double end_;
+    int minimumTransactionNumber_;
+    int maximumTransactionNumber_;
+    int minimumOperationNumber_;
+    int maximumOperationNumber_;
+    int initialAssemblyWorkerNumber_;
+    int initialTransporterNumber_;
+    int initialInspectorNumber_;
+    int threadNumber_;
+    int timeStep_;
+    int batchSize_;
+    int begCount_;
+    int begCount2_;
+    int endCount_;
+    int endCount2_;
+    bool useExisting_;
+    bool saveJobs_;
+    bool schedulerInitialized_;
+    bool estimatorFileSet_;
+    bool batchSizeSet_;
+    bool timeoutSet_;
+    bool threadNumSet_;
+    bool keepStats_;  
 };

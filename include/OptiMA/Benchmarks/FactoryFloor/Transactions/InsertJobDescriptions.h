@@ -2,13 +2,14 @@
 #include "OptiMA/Benchmarks/FactoryFloor/AgentTemplates/FloorManager.h"
 #include "OptiMA/TransactionModels/Transaction.h"
 
-class InsertJobDescriptions : public Transaction
+class InsertJobDescriptions final : public Transaction
 {
 public:
 
-    InsertJobDescriptions() : Transaction(9, 0, {0}) { }
+    InsertJobDescriptions()
+        : Transaction(9, 0, {0}) { }
 
-    shared_ptr<Memory> procedure() override
+    std::shared_ptr<Memory> procedure() override
     {
         Agent* agent = seizeAgent(3);
         executeInstruction(agent, &FloorManager::insertJobs);

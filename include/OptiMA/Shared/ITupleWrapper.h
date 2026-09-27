@@ -6,37 +6,37 @@ namespace OptiMA
 {
     class ITupleWrapper
     {
-    protected:
-    
-        virtual const type_info& getType() const = 0;
-
-        virtual const void* getPointer() const = 0;
-
     public:
         
         template<typename... Args>
-        tuple<Args...>& getTuple()
+        std::tuple<Args...>& getTuple()
         {
-            if(getType() != typeid(tuple<Args...>))
+            if(getType() != typeid(std::tuple<Args...>))
             {
-                throw bad_cast();
+                throw std::bad_cast();
             }
 
-            return *static_cast<tuple<Args...>*>(const_cast<void*>(getPointer()));
+            return *static_cast<std::tuple<Args...>*>(const_cast<void*>(getPointer()));
         }
 
         
         template<typename... Args>
-        const tuple<Args...>& getTuple() const
+        const std::tuple<Args...>& getTuple() const
         {
-            if(getType() != typeid(tuple<Args...>))
+            if(getType() != typeid(std::tuple<Args...>))
             {
-                throw bad_cast();
+                throw std::bad_cast();
             }
 
-            return *static_cast<tuple<Args...>*>(getPointer());
+            return *static_cast<std::tuple<Args...>*>(getPointer());
         }
 
         virtual ~ITupleWrapper() = default;    
+
+    protected:
+    
+        virtual const std::type_info& getType() const = 0;
+
+        virtual const void* getPointer() const = 0;
     };
 }

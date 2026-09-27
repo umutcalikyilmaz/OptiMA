@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.12)
-project(OptiMA VERSION 1.0.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.16)
+project(OptiMA VERSION 1.1.0 LANGUAGES C CXX)
 set(PROJECT_NAME "OptiMA")
 set(BINARY_NAME "optima")
 
@@ -13,9 +13,20 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 
-option(ENABLE_MIP "Enable MIP solver support (requires the third-party library SCIP)" OFF)
+option(ENABLE_MIP
+    "Enable MIP solver support (requires the third-party library SCIP)"
+    OFF
+)
 
-add_subdirectory(TxnSP)
+include(FetchContent)
+
+FetchContent_Declare(
+    TxnSP
+    GIT_REPOSITORY https://github.com/umutcalikyilmaz/TxnSP.git
+    GIT_TAG v1.1
+)
+
+FetchContent_MakeAvailable(TxnSP)
 
 add_library(${BINARY_NAME} SHARED src/AgentModels/Agent.cpp src/AgentModels/AgentPool.cpp src/AgentModels/PostBox.cpp
 src/Engine/AgentManager.cpp src/Engine/DefaultEstimator.cpp src/Engine/Driver.cpp src/Engine/Executor.cpp src/Engine/ExecutorState.cpp

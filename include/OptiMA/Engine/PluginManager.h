@@ -10,26 +10,44 @@ namespace OptiMA
     {
     public:
 
-        PluginManager(vector<IPluginInstanceFactory*>& factories, vector<PluginType> pluginTypes,
-        vector<int> pluginIds, vector<pair<int,int>> pluginAccesses);
+        class DriverKey
+        {
+        private:
+            
+            DriverKey() {}
+
+            friend class Driver;
+        };
+
+        class AgentKey
+        {
+        private:
+
+            AgentKey() {}
+
+            template<class A>
+            friend class AgentTemplate;
+        };
+
+        PluginManager(DriverKey, const std::vector<std::unique_ptr<IPluginInstanceFactory>>& factories,
+            const std::vector<PluginType>& pluginTypes, const std::vector<int>& pluginIds,
+            const std::vector<std::pair<int,int>>& pluginAccesses);
         
-        PluginInstance* seizePlugin(int pluginId, int agentType);
+        PluginInstance* seizePlugin(AgentKey, int pluginId, int agentType);
 
-        void releasePlugin(PluginInstance* instance);
+        void releasePlugin(AgentKey, PluginInstance* instance);
 
-        const set<int> getNonShareable(const set<int>& plugins);
+        const std::set<int> getNonShareable(const std::set<int>& plugins);
 
-        const set<int>& getNonShareable();
-
-        ~PluginManager();
+        const std::set<int>& getNonShareable();
 
     private:
 
-        map<int,PluginInstance*> instances_;
-        map<int,PluginType> types_;
-        map<int,PluginStatus> statuses_;
-        map<int,vector<int>> allowedAgentTypes_;
-        set<int> nonShareable_;
-        mutex pluginLock_;
+        std::map<int, std::unique_ptr<PluginInstance>> instances_;
+        std::map<int, PluginType> types_;
+        std::map<int, PluginStatus> statuses_;
+        std::map<int, std::vector<int>> allowedAgentTypes_;
+        std::set<int> nonShareable_;
+        std::mutex pluginLock_;
     };
 }

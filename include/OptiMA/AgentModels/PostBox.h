@@ -7,15 +7,32 @@ namespace OptiMA
     {
     public:
 
-        void sendMessage(shared_ptr<Message> msg);
+        class PostmasterKey
+        {
+        private:
 
-        queue<shared_ptr<Message>> checkMessages();
+            PostmasterKey() {}
 
-        ~PostBox();
+            friend class Postmaster;
+        };
+
+        class AgentKey
+        {
+        private:
+
+            AgentKey() {}
+
+            template <class A>
+            friend class AgentTemplate;
+        };
+
+        void sendMessage(PostmasterKey, std::shared_ptr<Message> msg);
+
+        std::queue<std::shared_ptr<Message>> checkMessages(AgentKey);
 
     private:
 
-        queue<shared_ptr<Message>> messages_;
-        mutex postLock_;
+        std::queue<std::shared_ptr<Message>> messages_;
+        std::mutex postLock_;
     };
 }

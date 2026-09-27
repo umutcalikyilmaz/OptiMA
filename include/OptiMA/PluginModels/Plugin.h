@@ -7,9 +7,13 @@ namespace OptiMA
     {
     public:
     
-        shared_ptr<Memory> operate(shared_ptr<Memory> inputParameters)
+        std::shared_ptr<Memory> operate(AgentKey, std::shared_ptr<Memory> inputParameters) override
         {
             return static_cast<P*>(this)->operate(inputParameters);
         }
+
+    protected:
+
+        Plugin() {}
     };
 }

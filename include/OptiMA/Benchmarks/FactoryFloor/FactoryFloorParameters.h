@@ -1,10 +1,11 @@
 #pragma once
+#include <condition_variable>
 #include "OptiMA/Shared/Types.h"
 #include "OptiMA/Benchmarks/FactoryFloor/Job.h"
 
-static shared_ptr<vector<unique_ptr<Job>>> jobs;
-static condition_variable warmupCondition;
-static condition_variable cooldownCondition;
+static std::shared_ptr<std::vector<std::unique_ptr<Job>>> jobs;
+static std::condition_variable warmupCondition;
+static std::condition_variable cooldownCondition;
 const static double assemblyManualOperationMeans[5] {700, 1200, 1700, 2200, 3000};
 const static double assemblyManualOperationStds[5] {65, 100, 120, 250, 250};
 const static double drillingOperationMeans[2] = {1500, 2100};
@@ -31,8 +32,8 @@ static int maximumAssemblyWorker;
 static int maximumTransporter;
 static int maximumInspector;
 static int totalJobNumber;
-static atomic_int completed = 0;
-static atomic_int started = 0;
+static std::atomic_int completed = 0;
+static std::atomic_int started = 0;
 static unsigned randomNumberSeed;
-static atomic_bool warmedUp = false;
-static atomic_bool cooledDown = false;
+static std::atomic_bool warmedUp = false;
+static std::atomic_bool cooledDown = false;

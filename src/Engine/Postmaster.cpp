@@ -18,7 +18,7 @@ namespace OptiMA
         return found;
     }
 
-    void Postmaster::enterLog(long transactionId, int senderId, int senderType, int receiverId, int receiverType, shared_ptr<Message> msg,
+    void Postmaster::enterLog(long transactionId, int senderId, int senderType, int receiverId, int receiverType, std::shared_ptr<Message> msg,
     PostBox* box)
     {
         msg->senderId_ = senderId;
@@ -26,44 +26,47 @@ namespace OptiMA
         msg->receiverId_ = receiverId;
         msg->receiverType_ = receiverType;
 
-        lock_guard<mutex> lock(logLock_);
+        std::lock_guard<std::mutex> lock(logLock_);
         auto it = transactionLog_.find(transactionId);
 
         if(it == transactionLog_.end())
         {
-            transactionLog_[transactionId] = vector<pair<shared_ptr<Message>, PostBox*>>();            
+            transactionLog_[transactionId] = std::vector<std::pair<std::shared_ptr<Message>, PostBox*>>();            
         }
 
         transactionLog_.at(transactionId).push_back(make_pair(msg, box));
     }
 
-    void Postmaster::send(shared_ptr<Message> msg, PostBox* postbox)
+    void Postmaster::send(std::shared_ptr<Message> msg, PostBox* postbox)
     {
-        msg->timeStamp_ = chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
-        postbox->sendMessage(msg);
+        msg->timeStamp_ = std::chrono::steady_clock::now().time_since_epoch().count() - startingTime_;
+        postbox->sendMessage(typename PostBox::PostmasterKey {}, msg);
     }
 
-    Postmaster::Postmaster(map<int,vector<int>>& agentIds, map<int,
-    vector<int>>& communicators, int startingTime) : agentIds_(agentIds), communicators_(communicators),
-    startingTime_(startingTime) { }
+    Postmaster::Postmaster(AgentManagerKey, std::map<int ,std::vector<int>>& agentIds, std::map<int,
+        std::vector<int>>& communicators, int startingTime)
+        : agentIds_(agentIds),
+          communicators_(communicators),
+          startingTime_(startingTime) { }
 
-    void Postmaster::addAgent(int agentId, int agentType, PostBox* postbox)
+    void Postmaster::addAgent(AgentManagerKey, int agentId, int agentType, PostBox* postbox)
     {
-        lock_guard<mutex> lock(postLock_);
-        postBoxes_[agentId] = make_pair(postbox, agentType);
+        std::lock_guard<std::mutex> lock(postLock_);
+        postBoxes_[agentId] = std::make_pair(postbox, agentType);
         agentIds_[agentType].push_back(agentId);
     }
-
+    /*
     void Postmaster::removeAgent(int agentId, int agentType)
     {
-        lock_guard<mutex> lock(postLock_);
+        std::lock_guard<std::mutex> lock(postLock_);
         postBoxes_.erase(agentId);
         agentIds_[agentType].erase(remove(agentIds_[agentType].begin(), agentIds_[agentType].end(), agentId), agentIds_[agentType].end());        
     }
-
-    void Postmaster::sendToId(long transactionId, int senderId, int senderType, int receiverId, shared_ptr<Message> msg)
+    */
+    void Postmaster::sendToId(AgentKey, long transactionId, int senderId, int senderType, int receiverId,
+        std::shared_ptr<Message> msg)
     {
-        lock_guard<mutex> lock(postLock_);
+        std::lock_guard<std::mutex> lock(postLock_);
         auto box = postBoxes_[receiverId];
         int receiverType = box.second;
 
@@ -75,14 +78,15 @@ namespace OptiMA
         enterLog(transactionId, senderId, senderType, receiverId, receiverType, msg, box.first);
     }
 
-    void Postmaster::sendToType(long transactionId, int senderId, int senderType, int receiverType, shared_ptr<Message> msg)
+    void Postmaster::sendToType(AgentKey, long transactionId, int senderId, int senderType, int receiverType,
+        std::shared_ptr<Message> msg)
     {
         if(!checkSender(receiverType, senderType))
         {
             throw UnautorizedAccessException("The sender is not autorized to communicate with this type of agent");
         }
 
-        lock_guard<mutex> lock(postLock_);
+        std::lock_guard<std::mutex> lock(postLock_);
 
         for(int receiverId : agentIds_[receiverType])
         {
@@ -90,9 +94,9 @@ namespace OptiMA
         }
     }
 
-    void Postmaster::commit(long transactionId)
+    void Postmaster::commit(TransactionKey, long transactionId)
     {
-        lock_guard<mutex> lock(logLock_);
+        std::lock_guard<std::mutex> lock(logLock_);
         
         auto it = transactionLog_.find(transactionId);
 
@@ -107,7 +111,7 @@ namespace OptiMA
         transactionLog_.erase(transactionId);
     }
 
-    void Postmaster::rollback(long transactionId)
+    void Postmaster::rollback(TransactionKey, long transactionId)
     {
         transactionLog_.erase(transactionId);
     }

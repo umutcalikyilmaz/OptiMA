@@ -2,14 +2,21 @@
 
 namespace OptiMA
 {
-    TransactionQueue::TransactionQueue() : triggered_(false), exit_(false), batchSize_(1), timeout_(1ms) { }
+    TransactionQueue::TransactionQueue()
+        : triggered_(false),
+          exit_(false),
+          batchSize_(1),
+          timeout_(std::chrono::milliseconds(1)) { }
 
-    TransactionQueue::TransactionQueue(int batchSize, chrono::milliseconds timeout) : triggered_(false), exit_(false), batchSize_(batchSize),
-    timeout_(timeout) { }
+    TransactionQueue::TransactionQueue(int batchSize, std::chrono::milliseconds timeout)
+        : triggered_(false),
+          exit_(false),
+          batchSize_(batchSize),
+          timeout_(timeout) { }
 
-    void TransactionQueue::silentPush(unique_ptr<ITransaction> txn)
+    void TransactionQueue::silentPush(std::unique_ptr<ITransaction> txn)
     {
-        lock_guard<mutex> lock(queueLock_);
+        std::lock_guard<std::mutex> lock(queueLock_);
         txnQueue_.push(move(txn));
 
         if((txnQueue_.size() >= batchSize_ && !triggered_) || initial_)
@@ -19,16 +26,16 @@ namespace OptiMA
         }                    
     }
 
-    void TransactionQueue::push(unique_ptr<ITransaction> txn)
+    void TransactionQueue::push(std::unique_ptr<ITransaction> txn)
     {      
-        lock_guard<mutex> lock(queueLock_);
+        std::lock_guard<std::mutex> lock(queueLock_);
         txnQueue_.push(move(txn));
         cv_.notify_one();
     }
 
-    unique_ptr<ITransaction> TransactionQueue::pull()
+    std::unique_ptr<ITransaction> TransactionQueue::pull()
     {        
-        unique_lock<mutex> lock(queueLock_);
+        std::unique_lock<std::mutex> lock(queueLock_);
         cv_.wait(lock, [this] 
         {
             return !txnQueue_.empty() || exit_.load();
@@ -39,20 +46,20 @@ namespace OptiMA
             return nullptr;            
         }
 
-        unique_ptr<ITransaction> res = move(txnQueue_.front());
+        std::unique_ptr<ITransaction> res = move(txnQueue_.front());
         txnQueue_.pop();
         return res;
     }
     
-    vector<unique_ptr<ITransaction>> TransactionQueue::pullAll()
+    std::vector<std::unique_ptr<ITransaction>> TransactionQueue::pullAll()
     {
-        unique_lock<mutex> lock(queueLock_);
+        std::unique_lock<std::mutex> lock(queueLock_);
         bool asd = cv_.wait_for(lock, timeout_, [this]
         {
             return triggered_.load() || exit_.load();
         });
 
-        vector<unique_ptr<ITransaction>> res;
+        std::vector<std::unique_ptr<ITransaction>> res;
 
         if(exit_)
         {
@@ -71,7 +78,7 @@ namespace OptiMA
 
     bool TransactionQueue::isEmpty()
     {
-        lock_guard<mutex> lock(queueLock_);
+        std::lock_guard<std::mutex> lock(queueLock_);
         return txnQueue_.empty();
     }
 

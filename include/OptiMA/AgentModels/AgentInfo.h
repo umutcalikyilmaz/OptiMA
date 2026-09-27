@@ -10,6 +10,5 @@ namespace OptiMA
         int agentId;
         int agentType;
         AgentStatus status;
-    };
-    
+    };    
 }

@@ -5,16 +5,16 @@ namespace OptiMA
 {
     struct Message
     {
-        shared_ptr<Memory> parameters;
-        string prompt;
+        std::shared_ptr<Memory> parameters;
+        std::string prompt;
 
         Message();
 
-        Message(string& prompt);
+        Message(const std::string& prompt);
 
-        Message(shared_ptr<Memory> parameters);
+        Message(std::shared_ptr<Memory> parameters);
 
-        Message(string& prompt, shared_ptr<Memory> parameters);
+        Message(const std::string& prompt, std::shared_ptr<Memory> parameters);
 
         int getSenderId();
 

@@ -13,15 +13,15 @@ namespace OptiMA
 
         TransactionQueue();
 
-        TransactionQueue(int batchSize, chrono::milliseconds timeout);
+        TransactionQueue(int batchSize, std::chrono::milliseconds timeout);
 
-        void silentPush(unique_ptr<ITransaction> txn);
+        void silentPush(std::unique_ptr<ITransaction> txn);
 
-        void push(unique_ptr<ITransaction> txn);
+        void push(std::unique_ptr<ITransaction> txn);
 
-        unique_ptr<ITransaction> pull();
+        std::unique_ptr<ITransaction> pull();
 
-        vector<unique_ptr<ITransaction>> pullAll();
+        std::vector<std::unique_ptr<ITransaction>> pullAll();
 
         bool isEmpty();
 
@@ -31,13 +31,13 @@ namespace OptiMA
 
     private:
 
-        queue<unique_ptr<ITransaction>> txnQueue_;
-        mutex queueLock_;
-        condition_variable cv_;
+        std::queue<std::unique_ptr<ITransaction>> txnQueue_;
+        std::mutex queueLock_;
+        std::condition_variable cv_;
         const int batchSize_;
-        const chrono::milliseconds timeout_;
-        atomic_bool triggered_;
-        atomic_bool exit_;
+        const std::chrono::milliseconds timeout_;
+        std::atomic_bool triggered_;
+        std::atomic_bool exit_;
         bool initial_ = true;
     };
 }

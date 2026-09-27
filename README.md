@@ -133,7 +133,7 @@ class MyTransaction : public OptiMA::Transaction
 
     // Second constructor for the OptiMA::Transaction class is used
     MyTransaction(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
-        agents,                // vector of seized agents that can be used by the transaction
+        agents,                // std::vector of seized agents that can be used by the transaction
         transactionType,       // type of the transaction (used by framework components during execution)
         transactionSubType,    // subtype of the transaction (used by framework components during execution)
         pluginSet,             // set of plugins used during execution (used for the locking process during execution)
@@ -142,7 +142,7 @@ class MyTransaction : public OptiMA::Transaction
         // contents of the constructor
     }
 
-    shared_ptr<Memory> procedure() override {
+    std::shared_ptr<Memory> procedure() override {
         // contents of the procedure function
     }
 
@@ -166,7 +166,7 @@ class MyTransactionFactory : public OptiMA::TransactionFactory {
         // contents of the generateInitialTransactions function
     }
 
-    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, shared_ptr<OptiMA::TransactionResult> result) override {
+    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, std::shared_ptr<OptiMA::TransactionResult> result) override {
         // contents of the generateTransactions function
     }    
 };

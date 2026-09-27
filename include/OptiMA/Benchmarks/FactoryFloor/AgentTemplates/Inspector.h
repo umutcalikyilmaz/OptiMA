@@ -8,28 +8,23 @@
 
 using namespace OptiMA;
 
-class Inspector : public AgentTemplate<Inspector>
+class Inspector final : public AgentTemplate<Inspector>
 {
-    NormalRandom reportRandom_;
-    unique_ptr<Job> currentJob_;
-    int supervisorId_;
-    int lastOperation_;
-    bool stopRequested_;
-
 public:
 
-    Inspector() : reportRandom_(inspectorReportMean * simulationTimeScale, inspectorReportStd * simulationTimeScale, randomNumberSeed),
-    stopRequested_(false) { }
+    Inspector()
+        : reportRandom_(inspectorReportMean * simulationTimeScale, inspectorReportStd * simulationTimeScale, randomNumberSeed),
+          stopRequested_(false) { }
 
-    shared_ptr<Memory> selfStop()
+    std::shared_ptr<Memory> selfStop()
     {
         return stopAgent(getAgentId());
     }
 
-    shared_ptr<Memory> pickUp()
+    std::shared_ptr<Memory> pickUp()
     {
-        shared_ptr<Memory> operationResult = operatePlugin(3, nullptr);
-        shared_ptr<Memory> res = make_shared<Memory>();
+        std::shared_ptr<Memory> operationResult = operatePlugin(3, nullptr);
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
 
         if(operationResult == nullptr)
         {
@@ -37,26 +32,26 @@ public:
         }
         else
         {
-            currentJob_ = move(get<0>(operationResult->getTuple<unique_ptr<Job>>(0)));
+            currentJob_ = std::move(std::get<0>(operationResult->getTuple<std::unique_ptr<Job>>(0)));
             res->addTuple(true);
         }
         
         return res;
     }
 
-    shared_ptr<Memory> scanPart()
+    std::shared_ptr<Memory> scanPart()
     {
-        shared_ptr<Memory> operationResult = operatePlugin(4, nullptr);
+        std::shared_ptr<Memory> operationResult = operatePlugin(4, nullptr);
         currentJob_->isSuccessful = get<0>(operationResult->getTuple<bool>(0));
         return nullptr;
     }
 
-    shared_ptr<Memory> reportResult()
+    std::shared_ptr<Memory> reportResult()
     {
         int duration = (int)reportRandom_.generate();
-        this_thread::sleep_for(chrono::milliseconds(duration));
+        std::this_thread::sleep_for(std::chrono::milliseconds(duration));
 
-        shared_ptr<Memory> res = make_shared<Memory>();
+        std::shared_ptr<Memory> res = std::make_shared<Memory>();
 
         auto msgs = checkMessages();
         res->addTuple(!msgs.empty());
@@ -64,16 +59,24 @@ public:
         return res;
     }
 
-    shared_ptr<Memory> place()
+    std::shared_ptr<Memory> place()
     {
-        shared_ptr<Memory> input = generateMemory();
+        std::shared_ptr<Memory> input = generateMemory();
         input->addTuple(currentJob_->id, currentJob_->isSuccessful);
-        shared_ptr<Memory> operationResult = operatePlugin(6, input);
+        std::shared_ptr<Memory> operationResult = operatePlugin(6, input);
 
-        shared_ptr<Memory> res = generateMemory();
+        std::shared_ptr<Memory> res = generateMemory();
         res->addTuple(get<0>(operationResult->getTuple<bool>(0)));
         return res;
     }
 
     void clearMemory() override { }
+
+private: 
+
+    NormalRandom reportRandom_;
+    std::unique_ptr<Job> currentJob_;
+    int supervisorId_;
+    int lastOperation_;
+    bool stopRequested_;
 };

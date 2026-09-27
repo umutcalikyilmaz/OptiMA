@@ -11,23 +11,31 @@ namespace OptiMA
     class Executor : public IExecutor
     {
     public:
+        
+        class DriverKey
+        {
+        private:
+            
+            DriverKey() {}
 
-        Executor(IDriver* driver, TransactionFactory* tfactory, PluginManager* pmanager, int threadNum, const set<int>& nonshareablePlugins,
-        bool optimized, bool keepStats);
+            friend class Driver;
+        };
 
-        void insertTransactionQueue(TransactionQueue* txnQueue);
 
-        void insertListener(IListener* listener);
+        Executor(DriverKey, IDriver* driver, TransactionFactory* tfactory, PluginManager* pmanager,
+            int threadNum, const std::set<int>& nonshareablePlugins, bool optimized, bool keepStats);
 
-        void start();
+        void insertTransactionQueue(DriverKey, TransactionQueue* txnQueue);
 
-        void assignTransaction(unique_ptr<ITransaction> txn, int index) override;
+        void insertListener(DriverKey, IListener* listener);
 
-        void stop();
+        void start(DriverKey);
 
-        map<int,map<int,double>> getStats();
+        void assignTransaction(SchedulerKey, std::unique_ptr<ITransaction> txn, int index) override;
 
-        ~Executor();
+        void stop(DriverKey);
+
+        std::map<int,std::map<int,double>> getStats(DriverKey);
 
     private:
 
@@ -36,21 +44,22 @@ namespace OptiMA
         PluginManager* pmanager_;
         TransactionFactory* tfactory_;
         TransactionQueue* txnQueue_;
-        ExecutorState** states_;
-        thread* threads_;
-        map<int, unique_ptr<mutex>> pluginLocks_;
-        const vector<int> haltingAgents_;
+        std::vector<std::unique_ptr<TransactionQueue>> txnQueues_;
+        std::vector<std::unique_ptr<ExecutorState>> states_;
+        std::vector<std::thread> threads_;
+        std::map<int, std::unique_ptr<std::mutex>> pluginLocks_;
+        const std::vector<int> haltingAgents_;
         int threadNum_;
         int count_ = 0;
-        atomic_bool lock_;
+        std::atomic_bool lock_;
         bool optimized_;
         bool keepStats_;
 
-        void lockPlugins(const set<int>& plugins);
+        void lockPlugins(const std::set<int>& plugins);
 
-        void unlockPlugins(const set<int>& plugins);
+        void unlockPlugins(const std::set<int>& plugins);
 
-        void executeTransaction(unique_ptr<ITransaction> txn, ExecutorState* state);
+        void executeTransaction(std::unique_ptr<ITransaction> txn, ExecutorState* state);
 
         void run(ExecutorState* state);
     };
