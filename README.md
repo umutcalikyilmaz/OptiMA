@@ -1,13 +1,18 @@
 # OptiMA
-The optimum multi agent framework (OptiMA) is  a framework for developing transaction-based multi-agent systems, and efficiently executing them on a limited hardware. The user can create a system by inserting the agent roles, plugins and engine components to the framework. OptiMA also has the option to use transaction scheduling during execution to ensure an improvement on the throughput of the system.
+OptiMA is  a framework for designing and executing transaction-based multi-agent systems. The framework applies strict locking procedures to ensure a high-level of isolation and consistency. It uses transaction schedule optimization to mitigate the performance drawbacks that might be caused by these strict procedures.
 
 ## Citation
-OptiMA is developed as a part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The study is presented in the paper given below.
+OptiMA is developed as part of a study on the transaction scheduling problem and its use in transaction-based optimizing multi-agent systems. The study is presented in the paper given below.
 
 [OptiMA: A Transaction-Based Framework with Throughput Optimization for Very Complex Multi-Agent Systems](https://arxiv.org/pdf/2511.03761)
 
+### Version Used in the Paper
+The experiments reported in the paper were conducted using **OptiMA v1.0**. The exact version of the source code used for those experiments is archived here:
+
+**[OptiMA v1.0](https://github.com/umutcalikyilmaz/OptiMA/tree/v1.0)**
+
 ## Installation
-OptiMA is designed for Debian and currently it is not compatible with Windows or MacOS. It uses the TxnSP software library (https://github.com/umutcalikyilmaz/TxnSP) for transaction scheduling. The user is not required to install TxnSP manually, it is installed automatically during the installation of OptiMA. For standard installation, the following bash instructions should be executed in the project's root folder.
+OptiMA requires a compiler with `C++20` support. It is designed for Debian-based systems and is currently not compatible with Windows or macOS. It uses the **[TxnSP Software Library](https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz)** for transaction scheduling, which is fetched automatically from GitHub during CMake configuration and built as part of OptiMA. For a standard installation, execute the following commands in the project's root directory:
 
 ```bash
 mkdir build
@@ -16,8 +21,7 @@ cmake ..
 sudo make install
 ```
 
-Mixed-integer programming solver module (MIPSolver) is not included in the standard installation and without it, the user cannot select to use mixed integer programming for transaction scheduling. To install with MIPSolver, first the SCIP Optimization Suite should be installed from https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz. Then the following bash insructions should be executed in the TxnSP project's root folder.
-
+The `MIPSolver` module, which is a part of **TxnSP**, is not included in the standard installation. To install OptiMA library with `MIPSolver`, the **[SCIP Optimization Suite](https://www.scipopt.org/download.php?fname=scipoptsuite-8.0.2.tgz)** must first be installed. Then, execute the following commands in the project's root directory:
 
 ```bash
 mkdir build
@@ -31,7 +35,6 @@ sudo make install
 After installing OptiMA, it can be imported to a project by adding the following lines in the CMakeLists.txt file.
 
 ```cmake
-find_package(TxnSP REQUIRED)
 find_package(OptiMA REQUIRED)
 target_link_libraries(my_project OptiMA::optima)
 ```
@@ -42,7 +45,7 @@ The library is included in the project using the code below.
 #include <OptiMA/OptiMA.h>
 ```
 
-The framework also includes a benchmark module, FactoryFloor, that simulates the production process in a fully optimized manufacturing facility. To include the FactoryFloor benchmark, the following code is used.
+The framework also includes a benchmark module, FactoryFloor, that simulates the production process in a fully automized manufacturing facility. Use the following code to include the FactoryFloor benchmark.
 
 ```c++
 #include <OptiMA/FactoryFloor.h>
@@ -50,10 +53,10 @@ The framework also includes a benchmark module, FactoryFloor, that simulates the
 
 ### Memory Class
 
-OptiMA includes shared classes that are used by various modules of the framework. These are used for storing and transferring multimodal information. One of these classes is `OptiMA::Memory`. This class is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `OptiMA::Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. These objects are managed using `std::shared_ptr` instead of being copied or using raw pointers for performance and safety issues. The code block below shows an example of creating a `OptiMA::Memory`, inserting and retrieving two `std::tuple` objects into it.
+OptiMA includes the shared shared class `Memory` that is used by various modules of the framework for storing and transferring multimodal information. A `Memory` instance is able to store multiple `std::tuple` objects, each of which can have a different signature. Due to the flexibility it provides, `Memory` is used as the return type and parameter of many built-in and custom functions in OptiMA. The code block below shows an example of creating a `Memory` instance, and inserting and retrieving two `std::tuple` objects into it.
 
 ```c++
-// constructs a OptiMA::Memory and returns the std::shared_ptr to this object
+// constructs a Memory object and returns std::shared_ptr<Memory> type
 std::shared_ptr<OptiMA::Memory> memory = OptiMA::generateMemory();     
 
 // A std::tuple<int, double, bool> is created and inserted into memory
@@ -66,7 +69,7 @@ memory->addTuple(
 // A std::tuple<std::string, double> is created and inserted into memory
 memory->addTuple(
     stringValue,        //an example variable of std::string type
-    doubleValue,     //an example variable of double type
+    doubleValue         //an example variable of double type
 );
 
 // the first tuple is retrieved
@@ -76,11 +79,18 @@ std::tuple<int, double, bool> firstTuple = memory->getTuple<int, double, bool>(0
 std::tuple<std::string, double> secondTuple = memory->getTuple<std::string, double>(1);
 ```
 
+### Model Design
+The process of designing a model in OptiMA includes the following steps:
+- Designing agent templates to determine the capabilities of different agent types,
+- Designing plugins that are used by agents as additional tools,
+- Defining the relationships between different agent types and plugins using model constraints,
+- Designing transaction templates which are used to generate transactions with intended functionalities in runtime,
+- Customizing several modules to control execution-level details of the model.
 
+Please refer to the associated paper for a more detailed understanding of the general logic and principles of model design in OptiMA. In the following, the necessary steps for designing a system using the OptiMA framework are given.
 
-### Model Creation
 #### Creating Plugins
-The user can create their own plugin classes to be used by the agents during execution. This is done by deriving the template class Plugin provided by OptiMA. When creating a plugin class, the operate function must be overrided. This function is called by an agent to use the plugin during execution.
+To create plugin classes, the template class `Plugin` must be derived. When creating a plugin class, the operate function must be overridden. This function is called by an agent to use the plugin during execution.
 
 ```c++
 class MyPlugin : public OptiMA::Plugin<MyPlugin>
@@ -93,7 +103,7 @@ public:
 };
 ```
 #### Creating Agent Templates
-In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the `OptiMA::AgentTemplate` class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restrictions on the signature of the input parameters. An example agent template class is given below.
+In OptiMA, each agent has a specific role. These roles are defined by the user by creating agent templates. An agent role is created by overriding the `AgentTemplate` class. In these derived classes, the user can define member functions that can be invoked by a transaction during the execution. For a member function to be callable by a transaction, it has to have a return type of `std::shared_ptr<OptiMA::Memory>`, but there is no restrictions on the signature of the input parameters. An example agent template class is given below.
 
 ```c++
 class MyAgentTemplate : public OptiMA::AgentTemplate<MyAgentTemplate>
@@ -113,31 +123,34 @@ public:
 
 #### Creating Transactions
 
-The user is supposed to create the classes of transactions that are going to be used to create transaction objects during model executions. A transaction class is created by deriving the `OptiMA::Transaction` class. This class does not have a default constructor, so a user-defined transaction class is required to call one of the two constructors of `OptiMA::Transaction`. The purpose of this structure is to force the user to provide the necessary information when creating a transaction class, such as the type of the transaction, subtype of the transaction and the set of plugins to be used during the execution of the transaction.
+Every process in OptiMA is enclosed in a transaction for high-level isolation and consistency. A transaction can perform complex operations that include actions from multiple agents. In runtime, transactions are generated from transaction templates, that are included in the model design. This can be done by creating a class derived from the `Transaction` class. `Transaction` does not have a default constructor, so a user-defined transaction class is required to call one of the two constructors of `OptiMA::Transaction`. The purpose of this structure is to force the user to provide the necessary information when creating a transaction class, such as the type of the transaction, subtype of the transaction and the set of plugins to be used during the execution of the transaction.
 
-When creating a transaction class, the `OptiMA::Transaction::procedure` function is required to be overridden, which defines the operation to be run during the execution of the transaction. The user also has the option to override the `OptiMA::Transaction::commitProcedure` and `OptiMA::Transaction::rollbackProcedure` functions that are executed when the transaction is committed and rolled back respectively. Two example transaction classes are shown below.
+When creating a transaction class, the `Transaction::procedure` function is also required to be overridden, which defines the operation to be run during the execution of the transaction. The user also has the option to override the `Transaction::commitProcedure` and `Transaction::rollbackProcedure` functions, which are executed when the transaction is committed and rolled back respectively. Two example transaction classes are shown below.
 
 ```c++
 // a transaction class 
-class MyTransaction : public OptiMA::Transaction
+class MyTransaction
+    : public OptiMA::Transaction
 {
     // First constructor for the OptiMA::Transaction class is used
-    MyTransaction(int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
-        transactionType,        // type of the transaction (used by framework components during execution)
-        transactionSubType,     // subtype of the transaction (used by framework components during execution)
-        pluginSet,              // set of plugins used during execution (used for the locking process during execution)
-    )
+    MyTransaction(int transactionType, int transactionSubType, std::set<int> pluginSet)
+        : OptiMA::Transaction(
+            transactionType,        // type of the transaction (used by framework components during execution)
+            transactionSubType,     // subtype of the transaction (used by framework components during execution)
+            pluginSet               // set of plugins used during execution (used for the locking process during execution)
+          )
     {
         // contents of the constructor
     }
 
     // Second constructor for the OptiMA::Transaction class is used
-    MyTransaction(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet) : OptiMA::Transaction(
-        agents,                // std::vector of seized agents that can be used by the transaction
-        transactionType,       // type of the transaction (used by framework components during execution)
-        transactionSubType,    // subtype of the transaction (used by framework components during execution)
-        pluginSet,             // set of plugins used during execution (used for the locking process during execution)
-    )
+    MyTransaction(std::vector<OptiMA::Agent*> agents, int transactionType, int transactionSubType, std::set<int> pluginSet)
+        : OptiMA::Transaction(
+            agents,                // std::vector of seized agents that can be used by the transaction
+            transactionType,       // type of the transaction (used by framework components during execution)
+            transactionSubType,    // subtype of the transaction (used by framework components during execution)
+            pluginSet              // set of plugins used during execution (used for the locking process during execution)
+          )
     {
         // contents of the constructor
     }
@@ -156,17 +169,20 @@ class MyTransaction : public OptiMA::Transaction
 };
 ```
 #### Creating Transaction Factory
-Transaction factory is a component of the framework that creates new transactions after execution of a transaction, depending on its results. The inner workings of this module are required to be provided by the user, since they heavily depend on the design of a specific multi-agent system. A model-specific transaction factory class is derived from the `OptiMA::TransactionFactory` class. Two functions of the base class, `OptiMA::TransactionFactory::generateInitialTransactions` and `OptiMA::TransactionFactory::generateTransactions` must be overridden by the user. The first one is called in the beginning of the model execution to create the initial transactions, and the second is called after each transaction execution to create new transactions depending on the result.
+Transaction factory is a component of the framework that creates new transactions after execution of a transaction, depending on its results. The inner workings of this module are required to be provided by the user, since they heavily depend on the design of a specific multi-agent system. A model-specific transaction factory class is derived from the `TransactionFactory` class. Two functions of the base class, `TransactionFactory::generateInitialTransactions` and `TransactionFactory::generateTransactions` must be overridden by the user. The first one is called in the beginning of the model execution to create the initial transactions, and the second is called after each transaction execution to create new transactions depending on the result.
 
 ```c++
 
-class MyTransactionFactory : public OptiMA::TransactionFactory {
-
-    std::vector<unique_ptr<OptiMA::ITransaction>> generateInitialTransactions() override {
+class MyTransactionFactory
+    : public OptiMA::TransactionFactory
+{
+    std::vector<unique_ptr<OptiMA::ITransaction>> generateInitialTransactions() override
+    {
         // contents of the generateInitialTransactions function
     }
 
-    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, std::shared_ptr<OptiMA::TransactionResult> result) override {
+    std::vector<unique_ptr<OptiMA::ITransaction>> generateTransactions(std::unique_ptr<OptiMA::ITransaction> txn, std::shared_ptr<OptiMA::TransactionResult> result) override
+    {
         // contents of the generateTransactions function
     }    
 };
@@ -175,20 +191,22 @@ class MyTransactionFactory : public OptiMA::TransactionFactory {
 #### Creating Estimator (Optional)
 Estimator module is used to estimate the lengths of the transactions during model execution. The estimated lengths are used for the schedule optimization process. OptiMA includes a default estimator module that keeps the statistics for different transaction types and subtypes, and uses them for estimation. To do this, first the model should be executed without optimization to keep statistics, which can then used for an optimized execution.
 
-The user is allowed to implement their own estimator, if they find performance of the default estimator insufficient. This is done by deriving a custom class from the `OptiMA::Estimator` class. The derived class is required to override the `estimateLength` function as shown below.
+The user is allowed to implement their own estimator, if they find performance of the default estimator insufficient. This is done by deriving a custom class from the `Estimator` class. The derived class is required to override the `estimateLength` function as shown below.
 
 ```c++
 
-class MyEstimator : public OptiMA::Estimator {
-
-    double estimateLength(const ITransaction& txn) override {
+class MyEstimator
+    : public OptiMA::Estimator
+{
+    double estimateLength(const ITransaction& txn) override
+    {
         // contents of the estimateLength function
     }   
 };
 ```
 
 #### Creating Multi-Agent Model
-After the completion of the steps below, the latest step is to create a `OptiMA::MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optionally estimator) are inserted into the model. The user is also expected to define the constraints of the models and set additional parameters related to model execution. Creation and modification of a `OptiMA::MultiAgentModel` object is demonstrated in the following code block.
+The latest step of model design is to create a `MultiAgentModel` object and modifying it to represent the system to be executed. In this process, the user defined agent roles, plugins, transactions, transaction factory (and optionally estimator) are inserted into the model. The user is also expected to define the constraints of the models and set additional parameters related to model execution. Creation and modification of a `MultiAgentModel` object is demonstrated in the following code block.
 
 ```c++
 
@@ -231,7 +249,7 @@ model->allowPluginUse(
     pluginId          // int: Id of the plugin that can be used by the indicated agent role
 );
 
-// Creating an object of a custom transaction factory class and assigning it to the model
+// Creating an object of a custom transaction factory class and assigning a pointer to it to the model
 MyTransactionFactory transactionFactory;
 model.setTransactionFactory(&transactionFactory);
 
@@ -239,7 +257,7 @@ model.setTransactionFactory(&transactionFactory);
 // MyEstimator estimator;
 // model->setEstimator(&estimator);
 
-// Recording statistics for default estimator (when this option is selected, default estimator cannot be used)
+// Recording statistics for default estimator (when this option is not selected, default estimator cannot be used)
 // model->keepStatsFile(statsFilePath);
 
 // Using default estimator (it uses the stats file created in another run of the model)
@@ -247,6 +265,7 @@ model.useDefaultEstimator(
     statsFilePath    // std::string: Path to the file containing the transaction statistics
 );
 
+// Setting the number of threads to be used in execution
 model.setThreadNumber(
     threadNumber        // int: Number of threads to be used in execution
 );
@@ -289,5 +308,5 @@ After creating and modifying a model, the user can create an `OptiMA::Driver` ob
 OptiMA::Driver drv;
 driver.startModel(model);
 std::shared_ptr<OptiMA::Memory> result = drv.getOutputParameters();
-
 ```
+The result can only be obtained after the execution is terminated by an authorized agent.
